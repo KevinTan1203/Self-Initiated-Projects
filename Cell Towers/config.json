@@ -1,0 +1,409 @@
+{
+    "version": "v1",
+    "config": {
+      "visState": {
+        "filters": [],
+        "layers": [
+          {
+            "id": "4e3poy",
+            "type": "point",
+            "config": {
+              "dataId": "LTE Cell Towers",
+              "label": "Point",
+              "color": [
+                218,
+                112,
+                191
+              ],
+              "highlightColor": [
+                252,
+                242,
+                26,
+                255
+              ],
+              "columns": {
+                "lat": "lat",
+                "lng": "lon",
+                "altitude": ""
+              },
+              "isVisible": true,
+              "visConfig": {
+                "radius": 10,
+                "fixedRadius": false,
+                "opacity": 0.8,
+                "outline": false,
+                "thickness": 2,
+                "strokeColor": "",
+                "colorRange": {
+                  "name": "ColorBrewer RdPu-6",
+                  "type": "sequential",
+                  "category": "ColorBrewer",
+                  "colors": [
+                    "#feebe2",
+                    "#fcc5c0",
+                    "#fa9fb5",
+                    "#f768a1",
+                    "#c51b8a",
+                    "#7a0177"
+                  ]
+                },
+                "strokeColorRange": {
+                  "name": "Global Warming",
+                  "type": "sequential",
+                  "category": "Uber",
+                  "colors": [
+                    "#5A1846",
+                    "#900C3F",
+                    "#C70039",
+                    "#E3611C",
+                    "#F1920E",
+                    "#FFC300"
+                  ]
+                },
+                "radiusRange": [
+                  3,
+                  35
+                ],
+                "filled": true
+              },
+              "hidden": false,
+              "textLabel": [
+                {
+                  "field": "",
+                  "color": [
+                    255,
+                    255,
+                    255
+                  ],
+                  "size": 18,
+                  "offset": [
+                    0,
+                    0
+                  ],
+                  "anchor": "start",
+                  "alignment": "center"
+                }
+              ]
+            },
+            "visualChannels": {
+              "colorField": {
+                "name": "radio",
+                "type": "string"
+              },
+              "colorScale": "ordinal",
+              "strokeColorField": "",
+              "strokeColorScale": "quantile",
+              "sizeField": {
+                "name": "range",
+                "type": "integer"
+              },
+              "sizeScale": "sqrt"
+            }
+          },
+          {
+            "id": "csx5goo",
+            "type": "point",
+            "config": {
+              "dataId": "UMTS Cell Towers",
+              "label": "Point",
+              "color": [
+                18,
+                92,
+                119
+              ],
+              "highlightColor": [
+                252,
+                242,
+                26,
+                255
+              ],
+              "columns": {
+                "lat": "lat",
+                "lng": "lon",
+                "altitude": ""
+              },
+              "isVisible": true,
+              "visConfig": {
+                "radius": 10,
+                "fixed2": false,
+                "opacity": 0.8,
+                "outline": false,
+                "thickness": 2,
+                "strokeColor": "",
+                "colorRange": {
+                  "name": "ColorBrewer YlOrRd-6",
+                  "type": "sequential",
+                  "category": "ColorBrewer",
+                  "colors": [
+                    "#ffffb2",
+                    "#fed976",
+                    "#feb24c",
+                    "#fd8d3c",
+                    "#f03b20",
+                    "#bd0026"
+                  ]
+                },
+                "strokeColorRange": {
+                  "name": "Global Warming",
+                  "type": "sequential",
+                  "category": "Uber",
+                  "colors": [
+                    "#5A1846",
+                    "#900C3F",
+                    "#C70039",
+                    "#E3611C",
+                    "#F1920E",
+                    "#FFC300"
+                  ]
+                },
+                "radiusRange": [
+                  3,
+                  35
+                ],
+                "filled": true
+              },
+              "hidden": false,
+              "textLabel": [
+                {
+                  "field": "",
+                  "color": [
+                    255,
+                    255,
+                    255
+                  ],
+                  "size": 18,
+                  "offset": [
+                    0,
+                    0
+                  ],
+                  "anchor": "start",
+                  "alignment": "center"
+                }
+              ]
+            },
+            "visualChannels": {
+              "colorField": {
+                "name": "area",
+                "type": "integer"
+              },
+              "colorScale": "quantile",
+              "strokeColorField": "",
+              "strokeColorScale": "quantile",
+              "sizeField": {
+                "name": "range",
+                "type": "integer"
+              },
+              "sizeScale": "sqrt"
+            }
+          },
+          {
+            "id": "amgkyrr",
+            "type": "point",
+            "config": {
+              "dataId": "GSM Cell Towers",
+              "label": "Point",
+              "color": [
+                77,
+                193,
+                156
+              ],
+              "highlightColor": [
+                252,
+                242,
+                26,
+                255
+              ],
+              "columns": {
+                "lat": "lat",
+                "lng": "lon",
+                "altitude": ""
+              },
+              "isVisible": true,
+              "visConfig": {
+                "radius": 10,
+                "fixedRadius": false,
+                "opacity": 0.8,
+                "outline": false,
+                "thickness": 2,
+                "strokeColor": "",
+                "colorRange": {
+                  "name": "ColorBrewer GnBu-6",
+                  "type": "sequential",
+                  "category": "ColorBrewer",
+                  "colors": [
+                    "#f0f9e8",
+                    "#ccebc5",
+                    "#a8ddb5",
+                    "#7bccc4",
+                    "#43a2ca",
+                    "#0868ac"
+                  ]
+                },
+                "strokeColorRange": {
+                  "name": "Global Warming",
+                  "type": "sequential",
+                  "category": "Uber",
+                  "colors": [
+                    "#5A1846",
+                    "#900C3F",
+                    "#C70039",
+                    "#E3611C",
+                    "#F1920E",
+                    "#FFC300"
+                  ]
+                },
+                "radiusRange": [
+                  3,
+                  35
+                ],
+                "filled": true
+              },
+              "hidden": false,
+              "textLabel": [
+                {
+                  "field": "",
+                  "color": [
+                    255,
+                    255,
+                    255
+                  ],
+                  "size": 18,
+                  "offset": [
+                    0,
+                    0
+                  ],
+                  "anchor": "start",
+                  "alignment": "center"
+                }
+              ]
+            },
+            "visualChannels": {
+              "colorField": {
+                "name": "area",
+                "type": "integer"
+              },
+              "colorScale": "quantile",
+              "strokeColorField": "",
+              "strokeColorScale": "quantile",
+              "sizeField": {
+                "name": "range",
+                "type": "integer"
+              },
+              "sizeScale": "sqrt"
+            }
+          }
+        ],
+        "interactionConfig": {
+          "tooltip": {
+            "fieldsToShow": {
+              "LTE Cell Towers": [
+                {
+                  "name": "radio",
+                  "format": ""
+                },
+                {
+                  "name": "area",
+                  "format": ""
+                },
+                {
+                  "name": "cell",
+                  "format": ""
+                },
+                {
+                  "name": "range",
+                  "format": ""
+                }
+              ],
+              "UMTS Cell Towers": [
+                {
+                  "name": "radio",
+                  "format": ""
+                },
+                {
+                  "name": "area",
+                  "format": ""
+                },
+                {
+                  "name": "cell",
+                  "format": ""
+                },
+                {
+                  "name": "range",
+                  "format": ""
+                }
+              ],
+              "GSM Cell Towers": [
+                {
+                  "name": "radio",
+                  "format": ""
+                },
+                {
+                  "name": "area",
+                  "format": ""
+                },
+                {
+                  "name": "cell",
+                  "format": ""
+                },
+                {
+                  "name": "range",
+                  "format": ""
+                }
+              ]
+            },
+            "compareMode": false,
+            "compareType": "absolute",
+            "enabled": true
+          },
+          "brush": {
+            "size": 0.5,
+            "enabled": false
+          },
+          "geocoder": {
+            "enabled": true
+          },
+          "coordinate": {
+            "enabled": true
+          }
+        },
+        "layerBlending": "additive",
+        "splitMaps": [],
+        "animationConfig": {
+          "currentTime": "",
+          "speed": 1
+        }
+      },
+      "mapState": {
+        "bearing": 0,
+        "dragRotate": false,
+        "latitude": 27.1301184159406,
+        "longitude": 29.951687157803143,
+        "pitch": 0,
+        "zoom": 1.5631231494196776,
+        "isSplit": false
+      },
+      "mapStyle": {
+        "styleType": "dark",
+        "topLayerGroups": {
+          "road": true,
+          "building": false,
+          "border": true
+        },
+        "visibleLayerGroups": {
+          "label": true,
+          "road": true,
+          "border": false,
+          "building": true,
+          "water": true,
+          "land": true,
+          "3d building": false
+        },
+        "threeDBuildingColor": [
+          9.665468314072013,
+          17.18305478057247,
+          31.1442867897876
+        ],
+        "mapStyles": {}
+      }
+    }
+  }
