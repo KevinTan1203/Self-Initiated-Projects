@@ -1,0 +1,701 @@
+{
+    "Cameroon": [
+      624
+    ],
+    "Guinea-Bissau": [
+      632
+    ],
+    "United Kingdom": [
+      234
+    ],
+    "Italy": [
+      222
+    ],
+    "Benin": [
+      616
+    ],
+    "Lebanon": [
+      415
+    ],
+    "Honduras": [
+      708
+    ],
+    "Iraq": [
+      418
+    ],
+    "Niue": [
+      555
+    ],
+    "South Africa": [
+      655
+    ],
+    "Antigua and Barbuda": [
+      344
+    ],
+    "San Marino": [
+      292
+    ],
+    "Sudan": [
+      634
+    ],
+    "New Caledonia": [
+      546
+    ],
+    "Sierra Leone": [
+      619
+    ],
+    "Ukraine": [
+      255
+    ],
+    "Russia": [
+      250
+    ],
+    "Monaco": [
+      212
+    ],
+    "Jamaica": [
+      338
+    ],
+    "Oman": [
+      422
+    ],
+    "Papua New Guinea": [
+      537
+    ],
+    "Bermuda": [
+      350
+    ],
+    "Mayotte": [
+      647
+    ],
+    "Mongolia": [
+      428
+    ],
+    "Kuwait": [
+      419
+    ],
+    "Qatar": [
+      427
+    ],
+    "Puerto Rico": [
+      330
+    ],
+    "Angola": [
+      631
+    ],
+    "Iceland": [
+      274
+    ],
+    "Croatia": [
+      219
+    ],
+    "Paraguay": [
+      744
+    ],
+    "Germany": [
+      262
+    ],
+    "Maldives": [
+      472
+    ],
+    "Mauritius": [
+      617
+    ],
+    "Lithuania": [
+      246
+    ],
+    "Saint Kitts and Nevis": [
+      356
+    ],
+    "Czech Republic": [
+      230
+    ],
+    "Turks and Caicos Islands": [
+      376
+    ],
+    "Ecuador": [
+      740
+    ],
+    "Belarus": [
+      257
+    ],
+    "Belgium": [
+      206
+    ],
+    "Central African Republic": [
+      623
+    ],
+    "North Macedonia": [
+      259,
+      294
+    ],
+    "Dominica": [
+      366
+    ],
+    "Gabon": [
+      628
+    ],
+    "Nauru": [
+      536
+    ],
+    "Vietnam": [
+      452
+    ],
+    "Togo": [
+      615
+    ],
+    "Israel": [
+      425
+    ],
+    "Japan": [
+      440
+    ],
+    "Luxembourg": [
+      270
+    ],
+    "Guam": [
+      310
+    ],
+    "Yemen": [
+      421
+    ],
+    "Dominican Republic": [
+      370
+    ],
+    "Senegal": [
+      608
+    ],
+    "Haiti": [
+      372
+    ],
+    "Saint Pierre and Miquelon": [
+      308
+    ],
+    "Algeria": [
+      603
+    ],
+    "Slovenia": [
+      293
+    ],
+    "Ethiopia": [
+      636
+    ],
+    "Bulgaria": [
+      284
+    ],
+    "Samoa": [
+      549
+    ],
+    "Bhutan": [
+      402
+    ],
+    "Georgia": [
+      282
+    ],
+    "Nigeria": [
+      621
+    ],
+    "Panama": [
+      714
+    ],
+    "Egypt": [
+      602
+    ],
+    "Bolivia": [
+      736
+    ],
+    "Mauritania": [
+      609
+    ],
+    "Moldova": [
+      259
+    ],
+    "South Sudan": [
+      659
+    ],
+    "Seychelles": [
+      633
+    ],
+    "Switzerland": [
+      228
+    ],
+    "Anguilla": [
+      365
+    ],
+    "Myanmar": [
+      414
+    ],
+    "Philippines": [
+      515
+    ],
+    "Romania": [
+      226
+    ],
+    "Taiwan": [
+      466
+    ],
+    "Brunei": [
+      528
+    ],
+    "Greenland": [
+      290
+    ],
+    "El Salvador": [
+      706
+    ],
+    "Macao": [
+      455
+    ],
+    "Lesotho": [
+      651
+    ],
+    "Brazil": [
+      724
+    ],
+    "Wallis and Futuna": [
+      543
+    ],
+    "Malawi": [
+      650
+    ],
+    "Eritrea": [
+      657
+    ],
+    "British Virgin Islands": [
+      348
+    ],
+    "Congo": [
+      629
+    ],
+    "Latvia": [
+      247
+    ],
+    "Ghana": [
+      620
+    ],
+    "Kazakhstan": [
+      401
+    ],
+    "New Zealand": [
+      530
+    ],
+    "Thailand": [
+      520
+    ],
+    "Fiji": [
+      542
+    ],
+    "India": [
+      404
+    ],
+    "Turkiye": [
+      286
+    ],
+    "Guyana": [
+      738
+    ],
+    "Somalia": [
+      637
+    ],
+    "Niger": [
+      614
+    ],
+    "Argentina": [
+      722
+    ],
+    "Sri Lanka": [
+      413
+    ],
+    "Guinea": [
+      611
+    ],
+    "Mexico": [
+      334
+    ],
+    "Portugal": [
+      268,
+      410
+    ],
+    "Kenya": [
+      639
+    ],
+    "Cambodia": [
+      456
+    ],
+    "Sweden": [
+      240
+    ],
+    "Netherlands": [
+      204
+    ],
+    "Aruba": [
+      363
+    ],
+    "Reunion": [
+      647
+    ],
+    "Norway": [
+      242
+    ],
+    "Rwanda": [
+      635
+    ],
+    "American Samoa": [
+      544
+    ],
+    "China": [
+      460
+    ],
+    "Uganda": [
+      641
+    ],
+    "Syria": [
+      417
+    ],
+    "Belize": [
+      702
+    ],
+    "Armenia": [
+      283
+    ],
+    "Gambia": [
+      607
+    ],
+    "Tonga": [
+      539
+    ],
+    "Cuba": [
+      368
+    ],
+    "Saint Vincent and the Grenadines": [
+      360
+    ],
+    "Comoros": [
+      654
+    ],
+    "Swaziland": [
+      653
+    ],
+    "Diego Garcia": [
+      310
+    ],
+    "Bosnia and Herzegovina": [
+      218
+    ],
+    "Albania": [
+      276
+    ],
+    "Cayman Islands": [
+      346
+    ],
+    "Spain": [
+      214
+    ],
+    "Bahamas": [
+      364
+    ],
+    "Venezuela": [
+      734
+    ],
+    "Guatemala": [
+      704
+    ],
+    "Satellite Networks": [
+      901
+    ],
+    "Zimbabwe": [
+      648
+    ],
+    "Micronesia": [
+      550
+    ],
+    "Ivory Coast": [
+      612
+    ],
+    "North Korea": [
+      467
+    ],
+    "Poland": [
+      260
+    ],
+    "Greece": [
+      202
+    ],
+    "Kosovo": [
+      221
+    ],
+    "Trinidad and Tobago": [
+      374
+    ],
+    "Hong Kong": [
+      454
+    ],
+    "Turkmenistan": [
+      438
+    ],
+    "United Arab Emirates": [
+      424
+    ],
+    "United States of America": [
+      310,
+      311,
+      312,
+      313,
+      314,
+      315,
+      316
+    ],
+    "Burundi": [
+      642
+    ],
+    "Namibia": [
+      649
+    ],
+    "Suriname": [
+      746
+    ],
+    "Laos": [
+      457
+    ],
+    "Chad": [
+      622
+    ],
+    "East Timor": [
+      514
+    ],
+    "Sao Tome and Principe": [
+      626
+    ],
+    "Slovakia": [
+      231
+    ],
+    "Saudi Arabia": [
+      420
+    ],
+    "Zambia": [
+      645
+    ],
+    "Liberia": [
+      618
+    ],
+    "Liechtenstein": [
+      246,
+      295
+    ],
+    "Australia": [
+      505
+    ],
+    "Equatorial Guinea": [
+      627
+    ],
+    "Vatican": [
+      225
+    ],
+    "Abkhazia": [
+      289
+    ],
+    "Saint Lucia": [
+      358
+    ],
+    "Andorra": [
+      213
+    ],
+    "South Korea": [
+      450
+    ],
+    "Democratic Republic of Congo": [
+      630
+    ],
+    "Tajikistan": [
+      436
+    ],
+    "Pakistan": [
+      410
+    ],
+    "Jordan": [
+      416
+    ],
+    "Madagascar": [
+      646
+    ],
+    "Cyprus": [
+      280
+    ],
+    "Gibraltar": [
+      266
+    ],
+    "Hungary": [
+      216
+    ],
+    "International Networks": [
+      901
+    ],
+    "Montenegro": [
+      297
+    ],
+    "Cook Islands": [
+      548
+    ],
+    "France": [
+      208
+    ],
+    "Canada": [
+      302
+    ],
+    "Palau": [
+      552
+    ],
+    "Nepal": [
+      429
+    ],
+    "Falkland Islands": [
+      750
+    ],
+    "Saint Helena and Ascension and Tristan da Cunha": [
+      658
+    ],
+    "Marshall Islands": [
+      551
+    ],
+    "Kyrgyzstan": [
+      437
+    ],
+    "Austria": [
+      232
+    ],
+    "Netherlands Antilles": [
+      362
+    ],
+    "Kiribati": [
+      545
+    ],
+    "Nicaragua": [
+      710
+    ],
+    "Montserrat": [
+      354
+    ],
+    "Vanuatu": [
+      541
+    ],
+    "Malta": [
+      278
+    ],
+    "Northern Mariana Islands": [
+      534
+    ],
+    "Virgin Islands": [
+      376
+    ],
+    "Solomon Islands": [
+      540
+    ],
+    "Tanzania": [
+      640
+    ],
+    "Bangladesh": [
+      470
+    ],
+    "Peru": [
+      716
+    ],
+    "Malaysia": [
+      502
+    ],
+    "Afghanistan": [
+      412
+    ],
+    "Mali": [
+      610
+    ],
+    "French Polynesia": [
+      547
+    ],
+    "Denmark": [
+      238
+    ],
+    "Finland": [
+      244
+    ],
+    "Uzbekistan": [
+      434
+    ],
+    "Barbados": [
+      342
+    ],
+    "Estonia": [
+      248
+    ],
+    "Burkina Faso": [
+      613
+    ],
+    "Uruguay": [
+      748
+    ],
+    "Indonesia": [
+      510
+    ],
+    "Serbia": [
+      220
+    ],
+    "Morocco": [
+      604
+    ],
+    "Chile": [
+      730
+    ],
+    "Faroe Islands": [
+      288
+    ],
+    "Ireland": [
+      272
+    ],
+    "Tuvalu": [
+      553
+    ],
+    "Bahrain": [
+      426
+    ],
+    "Singapore": [
+      525
+    ],
+    "Azerbaijan": [
+      400
+    ],
+    "Libya": [
+      606
+    ],
+    "Tunisia": [
+      605
+    ],
+    "Botswana": [
+      652
+    ],
+    "Iran": [
+      432
+    ],
+    "Colombia": [
+      732
+    ],
+    "Grenada": [
+      352
+    ],
+    "Costa Rica": [
+      712
+    ],
+    "Cape Verde": [
+      625
+    ],
+    "Mozambique": [
+      643
+    ],
+    "Palestinian Territory": [
+      425
+    ],
+    "Guadeloupe and Martinique and French Guiana": [
+      340
+    ],
+    "Djibouti": [
+      638
+    ]
+  }

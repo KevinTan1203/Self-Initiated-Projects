@@ -61,8 +61,8 @@
                   ]
                 },
                 "radiusRange": [
-                  3,
-                  35
+                  1,
+                  30
                 ],
                 "filled": true
               },
@@ -157,8 +157,8 @@
                   ]
                 },
                 "radiusRange": [
-                  3,
-                  35
+                  1,
+                  30
                 ],
                 "filled": true
               },
@@ -253,8 +253,8 @@
                   ]
                 },
                 "radiusRange": [
-                  3,
-                  35
+                  1,
+                  30
                 ],
                 "filled": true
               },
