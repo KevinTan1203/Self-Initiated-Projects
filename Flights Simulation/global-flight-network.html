@@ -1,0 +1,1863 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Global Aerospace Network · Live Traffic Simulation</title>
+    <style>
+      html,
+      body {
+        margin: 0;
+        padding: 0;
+        width: 100%;
+        height: 100%;
+        background: #000;
+        overflow: hidden;
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      }
+      #stage {
+        position: fixed;
+        inset: 0;
+      }
+      canvas {
+        display: block;
+        width: 100%;
+        height: 100%;
+      }
+      #label {
+        position: fixed;
+        left: 22px;
+        bottom: 18px;
+        color: #6b7686;
+        font-size: 11px;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        opacity: 0.7;
+        pointer-events: none;
+        z-index: 5;
+      }
+      #metrics {
+        position: fixed;
+        top: 14px;
+        right: 14px;
+        width: 322px;
+        height: calc(100vh - 28px);
+        background: rgba(8, 10, 16, 0.92);
+        border: 1px solid rgba(120, 140, 170, 0.22);
+        border-radius: 12px;
+        padding: 13px 13px 10px;
+        color: #c5cdd8;
+        font-size: 12px;
+        line-height: 1.4;
+        backdrop-filter: blur(10px);
+        display: flex;
+        flex-direction: column;
+        z-index: 10;
+        overflow: hidden;
+        box-sizing: border-box;
+      }
+      #metrics h3 {
+        margin: 0;
+        font-size: 12.5px;
+        letter-spacing: 0.07em;
+        text-transform: uppercase;
+        color: #eef3f8;
+        font-weight: 700;
+        flex-shrink: 0;
+      }
+      #panel-header {
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        margin-bottom: 11px;
+        flex-shrink: 0;
+      }
+      #panel-title {
+        display: flex;
+        align-items: flex-start;
+        gap: 8px;
+      }
+      #panel-subtitle {
+        font-size: 9.5px;
+        color: #7a8696;
+        letter-spacing: 0.07em;
+        text-transform: uppercase;
+        margin-top: 3px;
+      }
+      #live-dot {
+        width: 7px;
+        height: 7px;
+        border-radius: 50%;
+        margin-top: 4px;
+        background: #5ee6a0;
+        box-shadow: 0 0 6px #5ee6a0;
+        flex-shrink: 0;
+        animation: pulseDot 1.8s ease-in-out infinite;
+      }
+      @keyframes pulseDot {
+        0%,
+        100% {
+          opacity: 1;
+          transform: scale(1);
+        }
+        50% {
+          opacity: 0.35;
+          transform: scale(0.7);
+        }
+      }
+      #utc-clock {
+        font-size: 10.5px;
+        color: #8b97a8;
+        font-variant-numeric: tabular-nums;
+        letter-spacing: 0.03em;
+        white-space: nowrap;
+        margin-top: 2px;
+        text-align: right;
+      }
+      #utc-clock .zone {
+        display: block;
+        font-size: 8.5px;
+        color: #5a6575;
+        margin-top: 1px;
+      }
+      .stat-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 7px 10px;
+        margin-bottom: 9px;
+        flex-shrink: 0;
+      }
+      .stat-box {
+        display: flex;
+        flex-direction: column;
+        gap: 1px;
+      }
+      .stat-label {
+        font-size: 8.8px;
+        letter-spacing: 0.05em;
+        text-transform: uppercase;
+        color: #6b7686;
+      }
+      .stat-box strong {
+        font-size: 14.5px;
+        color: #e8eef6;
+        font-variant-numeric: tabular-nums;
+        font-weight: 600;
+      }
+      #metrics .stat {
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 4px;
+        color: #aeb8c6;
+        flex-shrink: 0;
+      }
+      #metrics .stat strong {
+        color: #e8eef6;
+        font-variant-numeric: tabular-nums;
+      }
+      #metrics .divider {
+        height: 1px;
+        background: rgba(120, 140, 170, 0.15);
+        margin: 7px 0;
+        flex-shrink: 0;
+      }
+      #metrics .section-title {
+        font-size: 10px;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: #7a8696;
+        margin-bottom: 5px;
+        flex-shrink: 0;
+      }
+      #fleet-list,
+      #region-list {
+        flex-shrink: 0;
+        margin-bottom: 2px;
+      }
+      .fleet-row,
+      .region-row {
+        margin-bottom: 5px;
+      }
+      .fleet-top,
+      .region-top {
+        display: flex;
+        justify-content: space-between;
+        font-size: 10.5px;
+        color: #aeb8c6;
+        margin-bottom: 2px;
+      }
+      .fleet-dot {
+        display: inline-block;
+        width: 6px;
+        height: 6px;
+        border-radius: 50%;
+        margin-right: 5px;
+      }
+      .fleet-bar-track,
+      .region-bar-track {
+        height: 3px;
+        background: rgba(120, 140, 170, 0.14);
+        border-radius: 2px;
+        overflow: hidden;
+      }
+      .fleet-bar-fill,
+      .region-bar-fill {
+        height: 100%;
+        border-radius: 2px;
+        transition: width 0.5s ease;
+      }
+      .region-top span:last-child {
+        color: #6b7686;
+        font-variant-numeric: tabular-nums;
+      }
+      #recent-list {
+        max-height: 100px;
+        overflow-y: auto;
+        margin-bottom: 2px;
+        flex-shrink: 0;
+      }
+      #recent-list .row,
+      #airport-list .row {
+        display: flex;
+        justify-content: space-between;
+        gap: 6px;
+        padding: 2px 0;
+        border-bottom: 1px solid rgba(120, 140, 170, 0.06);
+        color: #9aa5b5;
+        font-size: 11px;
+      }
+      #recent-list .row span:last-child,
+      #airport-list .counts {
+        color: #6b7686;
+        white-space: nowrap;
+        font-variant-numeric: tabular-nums;
+      }
+      #recent-list .fromto,
+      #airport-list .name {
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+      #airport-list-wrap {
+        flex: 1;
+        min-height: 0;
+        display: flex;
+        flex-direction: column;
+      }
+      #airport-list {
+        overflow-y: auto;
+        flex: 1;
+        min-height: 0;
+      }
+      #airport-list .row {
+        padding: 3px 0;
+      }
+      #airport-list .counts span {
+        display: inline-block;
+        min-width: 28px;
+        text-align: right;
+      }
+      #airport-list .counts .in {
+        color: #7eb8a8;
+      }
+      #airport-list .counts .out {
+        color: #d4a574;
+      }
+      #recent-list::-webkit-scrollbar,
+      #airport-list::-webkit-scrollbar {
+        width: 5px;
+      }
+      #recent-list::-webkit-scrollbar-thumb,
+      #airport-list::-webkit-scrollbar-thumb {
+        background: rgba(120, 140, 170, 0.35);
+        border-radius: 4px;
+      }
+      #header-airports {
+        display: flex;
+        justify-content: space-between;
+        font-size: 9px;
+        color: #5a6575;
+        letter-spacing: 0.04em;
+        text-transform: uppercase;
+        padding-bottom: 3px;
+        border-bottom: 1px solid rgba(120, 140, 170, 0.12);
+        margin-bottom: 2px;
+        flex-shrink: 0;
+      }
+      #header-airports span:last-child {
+        display: flex;
+        gap: 12px;
+      }
+      #zoom-hint {
+        position: fixed;
+        left: 22px;
+        top: 18px;
+        color: #4a5a6a;
+        font-size: 11px;
+        letter-spacing: 0.04em;
+        opacity: 0.6;
+        pointer-events: none;
+        z-index: 5;
+        background: rgba(0, 0, 0, 0.3);
+        padding: 4px 10px;
+        border-radius: 20px;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="stage">
+      <canvas id="map"></canvas>
+      <div id="label">
+        Global aerospace network · commercial · cargo · military · private
+      </div>
+      <div id="zoom-hint">⤤ click a continent to zoom</div>
+      <div id="metrics">
+        <div id="panel-header">
+          <div id="panel-title">
+            <span id="live-dot"></span>
+            <div>
+              <h3>Global Aerospace Network</h3>
+              <div id="panel-subtitle">Live Traffic Simulation</div>
+            </div>
+          </div>
+          <div id="utc-clock">--:--:--<span class="zone">UTC</span></div>
+        </div>
+
+        <div class="stat-grid">
+          <div class="stat-box">
+            <span class="stat-label">Completed</span
+            ><strong id="m-completed">0</strong>
+          </div>
+          <div class="stat-box">
+            <span class="stat-label">Active</span
+            ><strong id="m-active">0</strong>
+          </div>
+          <div class="stat-box">
+            <span class="stat-label">Distance Flown</span
+            ><strong id="m-distance">0 km</strong>
+          </div>
+          <div class="stat-box">
+            <span class="stat-label">Flights / min</span
+            ><strong id="m-rate">0</strong>
+          </div>
+          <div class="stat-box">
+            <span class="stat-label">Avg Cruise Speed</span
+            ><strong id="m-speed">0 km/h</strong>
+          </div>
+          <div class="stat-box">
+            <span class="stat-label">Airports</span
+            ><strong id="m-cities">0</strong>
+          </div>
+        </div>
+
+        <div class="divider"></div>
+        <div class="section-title">Fleet composition</div>
+        <div id="fleet-list"></div>
+
+        <div class="divider"></div>
+        <div class="section-title">Regional load</div>
+        <div id="region-list"></div>
+
+        <div class="divider"></div>
+        <div class="section-title">Recent completed routes</div>
+        <div id="recent-list"></div>
+        <div class="divider"></div>
+        <div class="section-title">Airport traffic (In / Out)</div>
+        <div id="airport-list-wrap">
+          <div id="header-airports">
+            <span>Airport</span>
+            <span><span>In</span><span>Out</span></span>
+          </div>
+          <div id="airport-list"></div>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      (function () {
+        const canvas = document.getElementById("map");
+        const ctx = canvas.getContext("2d");
+        let W, H, DPR;
+        let PAD_X, PAD_Y, mapW, mapH;
+        const LAT_MIN = -58,
+          LAT_MAX = 83;
+        const PANEL_WIDTH = 300,
+          PANEL_GAP = 28;
+        const STAR_FIELD = Array.from({ length: 220 }, () => ({
+          x: Math.random(),
+          y: Math.random(),
+          radius: 0.25 + Math.random() * 0.75,
+          alpha: 0.18 + Math.random() * 0.52,
+        }));
+
+        const elCompleted = document.getElementById("m-completed");
+        const elActive = document.getElementById("m-active");
+        const elCities = document.getElementById("m-cities");
+        const elDistance = document.getElementById("m-distance");
+        const elRate = document.getElementById("m-rate");
+        const elSpeed = document.getElementById("m-speed");
+        const elFleet = document.getElementById("fleet-list");
+        const elRegions = document.getElementById("region-list");
+        const elClock = document.getElementById("utc-clock");
+        const elRecent = document.getElementById("recent-list");
+        const elAirportList = document.getElementById("airport-list");
+
+        let completedCount = 0;
+        let totalDistanceKm = 0;
+        const completionTimestamps = [];
+        const recentRoutes = [];
+        const MAX_RECENT = 10;
+        const airportStats = {};
+        let sortedAirportNames = [];
+
+        function formatKm(km) {
+          if (km >= 1000000) return (km / 1000000).toFixed(2) + "M km";
+          if (km >= 1000) return Math.round(km).toLocaleString() + " km";
+          return Math.round(km) + " km";
+        }
+
+        function updateClock() {
+          const d = new Date();
+          const hh = String(d.getUTCHours()).padStart(2, "0");
+          const mm = String(d.getUTCMinutes()).padStart(2, "0");
+          const ss = String(d.getUTCSeconds()).padStart(2, "0");
+          elClock.innerHTML = `${hh}:${mm}:${ss}<span class="zone">UTC</span>`;
+        }
+
+        // ---- flight types & palettes (cruiseKmh drives realistic, varied speeds) ----
+        const FLIGHT_TYPES = [
+          {
+            id: "commercial",
+            label: "✈️",
+            core: "#ffe5b4",
+            glow: "#f7b731",
+            trail: "rgba(247,183,49,",
+            cruiseKmh: 870,
+            speedVar: 0.1,
+          },
+          {
+            id: "cargo",
+            label: "📦",
+            core: "#b0f0d0",
+            glow: "#2ecc71",
+            trail: "rgba(46,204,113,",
+            cruiseKmh: 760,
+            speedVar: 0.12,
+          },
+          {
+            id: "military",
+            label: "⚡",
+            core: "#f0b0b0",
+            glow: "#e74c3c",
+            trail: "rgba(231,76,60,",
+            cruiseKmh: 1250,
+            speedVar: 0.24,
+          },
+          {
+            id: "private",
+            label: "⭐",
+            core: "#d4b8f0",
+            glow: "#9b59b6",
+            trail: "rgba(155,89,182,",
+            cruiseKmh: 600,
+            speedVar: 0.3,
+          },
+        ];
+        const REF_CRUISE_KMH = 850;
+
+        function randomType() {
+          return FLIGHT_TYPES[Math.floor(Math.random() * FLIGHT_TYPES.length)];
+        }
+
+        // ---- resize & projection ----
+        function resize() {
+          DPR = Math.min(window.devicePixelRatio || 1, 2);
+          W = window.innerWidth;
+          H = window.innerHeight;
+          canvas.width = W * DPR;
+          canvas.height = H * DPR;
+          ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+          const rightReserve = PANEL_WIDTH + PANEL_GAP;
+          PAD_X = W * 0.025;
+          PAD_Y = H * 0.05;
+          mapW = Math.max(200, W - PAD_X - rightReserve);
+          mapH = H - PAD_Y * 2;
+          projectCities();
+        }
+
+        function project(lon, lat) {
+          const x = PAD_X + ((lon + 180) / 360) * mapW;
+          const y = PAD_Y + ((LAT_MAX - lat) / (LAT_MAX - LAT_MIN)) * mapH;
+          return [x, y];
+        }
+
+        // ---- continents ----
+        const CONTINENTS = [
+          [
+            [-168, 66],
+            [-165, 60],
+            [-152, 58],
+            [-140, 60],
+            [-130, 55],
+            [-125, 49],
+            [-124, 40],
+            [-120, 34],
+            [-117, 32],
+            [-110, 24],
+            [-105, 20],
+            [-97, 18],
+            [-92, 16],
+            [-88, 14],
+            [-84, 9],
+            [-79, 8],
+            [-77, 8],
+            [-80, 20],
+            [-81, 25],
+            [-80, 31],
+            [-75, 35],
+            [-71, 41],
+            [-70, 43],
+            [-67, 45],
+            [-60, 47],
+            [-55, 51],
+            [-58, 55],
+            [-65, 60],
+            [-75, 63],
+            [-85, 67],
+            [-95, 69],
+            [-105, 72],
+            [-115, 72],
+            [-125, 70],
+            [-135, 70],
+            [-150, 71],
+            [-160, 70],
+            [-166, 68],
+            [-168, 66],
+          ],
+          [
+            [-45, 60],
+            [-38, 65],
+            [-28, 70],
+            [-22, 76],
+            [-30, 82],
+            [-45, 82],
+            [-58, 76],
+            [-62, 66],
+            [-50, 60],
+            [-45, 60],
+          ],
+          [
+            [-77, 8],
+            [-80, 0],
+            [-81, -5],
+            [-80, -15],
+            [-71, -18],
+            [-70, -25],
+            [-71, -33],
+            [-73, -42],
+            [-75, -50],
+            [-68, -55],
+            [-65, -52],
+            [-62, -45],
+            [-58, -38],
+            [-48, -25],
+            [-38, -13],
+            [-35, -8],
+            [-40, 0],
+            [-50, 1],
+            [-60, 5],
+            [-65, 10],
+            [-72, 10],
+            [-77, 8],
+          ],
+          [
+            [-9, 43],
+            [-9, 38],
+            [-6, 36],
+            [-2, 36],
+            [3, 39],
+            [7, 43],
+            [10, 44],
+            [13, 45],
+            [12, 42],
+            [15, 38],
+            [18, 40],
+            [23, 38],
+            [26, 40],
+            [23, 42],
+            [26, 44],
+            [29, 45],
+            [30, 46],
+            [28, 50],
+            [24, 50],
+            [26, 53],
+            [24, 56],
+            [28, 60],
+            [24, 65],
+            [18, 64],
+            [11, 58],
+            [8, 58],
+            [5, 58],
+            [10, 54],
+            [8, 54],
+            [9, 49],
+            [6, 50],
+            [4, 51],
+            [2, 51],
+            [-2, 49],
+            [-5, 48],
+            [-2, 44],
+            [-9, 43],
+          ],
+          [
+            [-5, 50],
+            [-3, 51],
+            [0, 51],
+            [-1, 53],
+            [-3, 56],
+            [-6, 58],
+            [-7, 55],
+            [-6, 54],
+            [-5, 50],
+          ],
+          [
+            [5, 58],
+            [10, 63],
+            [15, 66],
+            [20, 69],
+            [25, 71],
+            [29, 69],
+            [24, 66],
+            [20, 60],
+            [12, 58],
+            [5, 58],
+          ],
+          [
+            [-17, 15],
+            [-16, 12],
+            [-13, 8],
+            [-8, 5],
+            [-3, 5],
+            [3, 6],
+            [9, 5],
+            [9, 1],
+            [12, -6],
+            [12, -18],
+            [15, -26],
+            [18, -34],
+            [25, -34],
+            [30, -29],
+            [33, -24],
+            [35, -20],
+            [40, -16],
+            [40, -2],
+            [43, 3],
+            [48, 10],
+            [45, 12],
+            [43, 14],
+            [40, 16],
+            [38, 18],
+            [35, 22],
+            [32, 27],
+            [33, 31],
+            [25, 32],
+            [20, 32],
+            [10, 32],
+            [3, 29],
+            [-6, 20],
+            [-10, 17],
+            [-17, 15],
+          ],
+          [
+            [44, -12],
+            [47, -14],
+            [50, -17],
+            [47, -25],
+            [44, -22],
+            [43, -18],
+            [44, -12],
+          ],
+          [
+            [28, 50],
+            [30, 46],
+            [35, 45],
+            [40, 40],
+            [46, 40],
+            [50, 44],
+            [55, 45],
+            [60, 47],
+            [58, 42],
+            [52, 38],
+            [48, 35],
+            [45, 32],
+            [48, 30],
+            [50, 27],
+            [56, 26],
+            [59, 23],
+            [62, 25],
+            [61, 29],
+            [56, 27],
+            [50, 30],
+            [45, 28],
+            [40, 30],
+            [35, 32],
+            [36, 36],
+            [32, 37],
+            [28, 42],
+            [26, 44],
+            [28, 50],
+          ],
+          [
+            [68, 24],
+            [71, 21],
+            [73, 15],
+            [76, 9],
+            [80, 8],
+            [80, 13],
+            [84, 17],
+            [88, 22],
+            [92, 22],
+            [88, 26],
+            [80, 20],
+            [73, 20],
+            [70, 22],
+            [68, 24],
+          ],
+          [
+            [26, 53],
+            [30, 50],
+            [40, 48],
+            [48, 48],
+            [55, 51],
+            [60, 54],
+            [55, 58],
+            [60, 62],
+            [65, 66],
+            [70, 68],
+            [78, 72],
+            [88, 73],
+            [100, 74],
+            [112, 73],
+            [125, 72],
+            [135, 73],
+            [145, 70],
+            [160, 69],
+            [173, 66],
+            [179, 63],
+            [170, 60],
+            [160, 60],
+            [150, 55],
+            [142, 48],
+            [135, 43],
+            [131, 39],
+            [126, 38],
+            [124, 40],
+            [120, 38],
+            [122, 32],
+            [120, 26],
+            [117, 23],
+            [110, 20],
+            [106, 18],
+            [101, 10],
+            [98, 8],
+            [100, 15],
+            [97, 20],
+            [92, 22],
+            [97, 27],
+            [100, 28],
+            [105, 29],
+            [110, 35],
+            [108, 40],
+            [112, 42],
+            [118, 42],
+            [123, 42],
+            [124, 50],
+            [118, 52],
+            [110, 52],
+            [104, 52],
+            [98, 52],
+            [90, 50],
+            [82, 50],
+            [76, 52],
+            [70, 55],
+            [62, 56],
+            [58, 60],
+            [62, 66],
+            [70, 66],
+            [65, 60],
+            [58, 52],
+            [52, 50],
+            [45, 48],
+            [40, 48],
+            [34, 50],
+            [30, 50],
+            [26, 53],
+          ],
+          [
+            [95, 15],
+            [98, 8],
+            [101, 3],
+            [104, 1],
+            [104, -4],
+            [113, -7],
+            [119, -8],
+            [124, -8],
+            [128, -3],
+            [122, 1],
+            [117, 4],
+            [110, 2],
+            [103, 6],
+            [100, 10],
+            [95, 15],
+          ],
+          [
+            [130, 31],
+            [132, 34],
+            [136, 35],
+            [139, 36],
+            [141, 40],
+            [144, 43],
+            [142, 45],
+            [139, 41],
+            [136, 37],
+            [133, 34],
+            [130, 31],
+          ],
+          [
+            [121, 18],
+            [124, 14],
+            [126, 9],
+            [123, 7],
+            [121, 11],
+            [120, 15],
+            [121, 18],
+          ],
+          [
+            [113, -22],
+            [114, -28],
+            [118, -34],
+            [124, -33],
+            [131, -32],
+            [137, -35],
+            [140, -38],
+            [146, -39],
+            [150, -37],
+            [153, -28],
+            [153, -24],
+            [148, -20],
+            [145, -16],
+            [142, -11],
+            [136, -12],
+            [131, -12],
+            [129, -15],
+            [126, -14],
+            [122, -17],
+            [113, -22],
+          ],
+          [
+            [172, -41],
+            [175, -37],
+            [178, -38],
+            [177, -42],
+            [172, -45],
+            [167, -45],
+            [172, -41],
+          ],
+        ];
+
+        function drawContinent(poly) {
+          ctx.beginPath();
+          let started = false,
+            prevX = null;
+          for (let i = 0; i < poly.length; i++) {
+            const [lon, lat] = poly[i];
+            const [x, y] = project(lon, lat);
+            if (prevX !== null && Math.abs(x - prevX) > mapW * 0.5) {
+              ctx.moveTo(x, y);
+            } else if (!started) {
+              ctx.moveTo(x, y);
+              started = true;
+            } else {
+              ctx.lineTo(x, y);
+            }
+            prevX = x;
+          }
+          ctx.closePath();
+          ctx.fill();
+          ctx.stroke();
+        }
+
+        function drawBackdrop() {
+          ctx.fillStyle = "#02050b";
+          ctx.fillRect(0, 0, W, H);
+
+          const glow = ctx.createRadialGradient(
+            PAD_X + mapW * 0.42,
+            PAD_Y + mapH * 0.46,
+            mapH * 0.08,
+            PAD_X + mapW * 0.42,
+            PAD_Y + mapH * 0.46,
+            mapH * 0.92,
+          );
+          glow.addColorStop(0, "rgba(19, 43, 62, 0.34)");
+          glow.addColorStop(0.42, "rgba(7, 20, 34, 0.16)");
+          glow.addColorStop(1, "rgba(0, 0, 0, 0)");
+          ctx.fillStyle = glow;
+          ctx.fillRect(0, 0, W, H);
+
+          STAR_FIELD.forEach((star) => {
+            ctx.beginPath();
+            ctx.arc(star.x * W, star.y * H, star.radius, 0, Math.PI * 2);
+            ctx.fillStyle = `rgba(190, 216, 232, ${star.alpha})`;
+            ctx.fill();
+          });
+        }
+
+        function drawGraticule() {
+          ctx.save();
+          ctx.strokeStyle = "rgba(105, 150, 176, 0.075)";
+          ctx.lineWidth = 0.55;
+          for (let lat = -60; lat <= 80; lat += 20) {
+            ctx.beginPath();
+            for (let lon = -180; lon <= 180; lon += 4) {
+              const [x, y] = project(lon, lat);
+              if (lon === -180) ctx.moveTo(x, y);
+              else ctx.lineTo(x, y);
+            }
+            ctx.stroke();
+          }
+          for (let lon = -180; lon <= 180; lon += 30) {
+            ctx.beginPath();
+            for (let lat = LAT_MIN; lat <= LAT_MAX; lat += 3) {
+              const [x, y] = project(lon, lat);
+              if (lat === LAT_MIN) ctx.moveTo(x, y);
+              else ctx.lineTo(x, y);
+            }
+            ctx.stroke();
+          }
+          ctx.restore();
+        }
+
+        // Brightness reflects each region's CURRENT relative share of traffic (decaying activity
+        // normalized against the busiest region right now) — not a value that only ever grows as
+        // more flights complete over the session.
+        function drawTrafficHeat() {
+          ctx.save();
+          ctx.globalCompositeOperation = "screen";
+
+          REGIONS_INFO.forEach((r) => {
+            const v = regionActivity[r.name] || 0;
+            const rel = v / currentMaxRegionActivity;
+            if (rel < 0.04) return;
+            const [cx, cy] = project(r.lon, r.lat);
+            const radius = Math.min(r.radius * mapW * 0.42, mapH * 0.24);
+            const hue = 200 - rel * 165;
+            const glow = ctx.createRadialGradient(cx, cy, 0, cx, cy, radius);
+            glow.addColorStop(
+              0,
+              `hsla(${hue.toFixed(0)}, 90%, 60%, ${(0.1 + rel * 0.22).toFixed(3)})`,
+            );
+            glow.addColorStop(
+              0.55,
+              `hsla(${hue.toFixed(0)}, 85%, 55%, ${(0.04 + rel * 0.09).toFixed(3)})`,
+            );
+            glow.addColorStop(1, `hsla(${hue.toFixed(0)}, 80%, 50%, 0)`);
+            ctx.fillStyle = glow;
+            ctx.beginPath();
+            ctx.arc(cx, cy, radius, 0, Math.PI * 2);
+            ctx.fill();
+          });
+
+          cities.forEach((c) => {
+            const v = heatActivity[c.name] || 0;
+            if (!v) return;
+            const rel = Math.min(1, v / currentMaxAirportActivity);
+            const hue = 195 - rel * 160;
+            const radius = 3 + rel * 9;
+            const heat = ctx.createRadialGradient(
+              c.x,
+              c.y,
+              0,
+              c.x,
+              c.y,
+              radius,
+            );
+            heat.addColorStop(
+              0,
+              `hsla(${hue.toFixed(0)}, 96%, 72%, ${(0.28 + rel * 0.34).toFixed(3)})`,
+            );
+            heat.addColorStop(1, `hsla(${hue.toFixed(0)}, 88%, 52%, 0)`);
+            ctx.fillStyle = heat;
+            ctx.beginPath();
+            ctx.arc(c.x, c.y, radius, 0, Math.PI * 2);
+            ctx.fill();
+          });
+          ctx.restore();
+        }
+
+        // Approximate day/night terminator from current UTC time — decorative, but gives busy
+        // regions a "lit up at night" quality once the traffic glow (screen blend) lands on top.
+        function drawTerminator() {
+          const date = new Date();
+          const startOfYear = Date.UTC(date.getUTCFullYear(), 0, 0);
+          const dayOfYear = (date.getTime() - startOfYear) / 86400000;
+          const declDeg =
+            23.44 * Math.sin(((2 * Math.PI) / 365.25) * (dayOfYear - 81));
+          const declClamped =
+            (declDeg < 0 ? -1 : 1) * Math.max(Math.abs(declDeg), 1.0);
+          const decl = (declClamped * Math.PI) / 180;
+          const utcHours =
+            date.getUTCHours() +
+            date.getUTCMinutes() / 60 +
+            date.getUTCSeconds() / 3600;
+          let subLon = -(utcHours - 12) * 15;
+          subLon = ((((subLon + 180) % 360) + 360) % 360) - 180;
+
+          const pts = [];
+          for (let lon = -180; lon <= 180; lon += 3) {
+            const dlon = ((lon - subLon) * Math.PI) / 180;
+            const y = -Math.cos(decl) * Math.cos(dlon);
+            const x = Math.sin(decl);
+            let lat = (Math.atan2(y, x) * 180) / Math.PI;
+            lat = Math.max(LAT_MIN, Math.min(LAT_MAX, lat));
+            pts.push(project(lon, lat));
+          }
+          const sampleLat = Math.max(LAT_MIN, Math.min(LAT_MAX, declClamped));
+          const daySample = project(subLon, sampleLat);
+          const nightIsTop = daySample[1] > PAD_Y + mapH / 2;
+
+          ctx.save();
+          ctx.beginPath();
+          ctx.moveTo(pts[0][0], pts[0][1]);
+          for (let i = 1; i < pts.length; i++) ctx.lineTo(pts[i][0], pts[i][1]);
+          if (nightIsTop) {
+            ctx.lineTo(PAD_X + mapW, PAD_Y);
+            ctx.lineTo(PAD_X, PAD_Y);
+          } else {
+            ctx.lineTo(PAD_X + mapW, PAD_Y + mapH);
+            ctx.lineTo(PAD_X, PAD_Y + mapH);
+          }
+          ctx.closePath();
+          ctx.fillStyle = "rgba(2, 6, 14, 0.5)";
+          ctx.fill();
+          ctx.restore();
+        }
+
+        // ---- city data ----
+        const CITY_DATA = [
+          ["New York JFK", 40.64, -73.78],
+          ["New York LGA", 40.78, -73.87],
+          ["Newark EWR", 40.69, -74.17],
+          ["Los Angeles LAX", 33.94, -118.41],
+          ["San Francisco SFO", 37.62, -122.38],
+          ["Chicago ORD", 41.98, -87.9],
+          ["Chicago MDW", 41.79, -87.75],
+          ["Atlanta ATL", 33.64, -84.43],
+          ["Dallas DFW", 32.9, -97.04],
+          ["Dallas DAL", 32.85, -96.85],
+          ["Houston IAH", 29.98, -95.34],
+          ["Houston HOU", 29.65, -95.28],
+          ["Miami MIA", 25.8, -80.29],
+          ["Miami FLL", 26.07, -80.15],
+          ["Seattle SEA", 47.45, -122.31],
+          ["Denver DEN", 39.86, -104.67],
+          ["Boston BOS", 42.36, -71.01],
+          ["Washington IAD", 38.95, -77.46],
+          ["Washington DCA", 38.85, -77.04],
+          ["Phoenix PHX", 33.43, -112.01],
+          ["Las Vegas LAS", 36.08, -115.15],
+          ["San Diego SAN", 32.73, -117.19],
+          ["Minneapolis MSP", 44.88, -93.22],
+          ["Detroit DTW", 42.21, -83.35],
+          ["Philadelphia PHL", 39.87, -75.24],
+          ["Charlotte CLT", 35.21, -80.95],
+          ["Orlando MCO", 28.43, -81.31],
+          ["Tampa TPA", 27.98, -82.53],
+          ["Salt Lake City SLC", 40.79, -111.98],
+          ["Portland PDX", 45.59, -122.6],
+          ["Honolulu HNL", 21.32, -157.92],
+          ["Anchorage ANC", 61.17, -150.0],
+          ["Austin AUS", 30.19, -97.67],
+          ["Nashville BNA", 36.12, -86.68],
+          ["New Orleans MSY", 29.99, -90.26],
+          ["Toronto YYZ", 43.68, -79.63],
+          ["Toronto YTZ", 43.63, -79.4],
+          ["Vancouver YVR", 49.19, -123.18],
+          ["Montreal YUL", 45.47, -73.74],
+          ["Calgary YYC", 51.12, -114.01],
+          ["Ottawa YOW", 45.32, -75.67],
+          ["Edmonton YEG", 53.31, -113.58],
+          ["Mexico City MEX", 19.44, -99.07],
+          ["Cancun CUN", 21.04, -86.87],
+          ["Guadalajara GDL", 20.52, -103.31],
+          ["Monterrey MTY", 25.78, -100.11],
+          ["Panama City PTY", 9.07, -79.38],
+          ["San Jose SJO", 9.99, -84.21],
+          ["Sao Paulo GRU", -23.43, -46.47],
+          ["Sao Paulo CGH", -23.63, -46.66],
+          ["Rio de Janeiro GIG", -22.81, -43.25],
+          ["Rio de Janeiro SDU", -22.91, -43.16],
+          ["Brasilia BSB", -15.87, -47.92],
+          ["Buenos Aires EZE", -34.82, -58.54],
+          ["Buenos Aires AEP", -34.56, -58.42],
+          ["Santiago SCL", -33.39, -70.79],
+          ["Lima LIM", -12.02, -77.11],
+          ["Bogota BOG", 4.7, -74.15],
+          ["Medellin MDE", 6.16, -75.42],
+          ["Quito UIO", -0.13, -78.36],
+          ["Caracas CCS", 10.6, -66.99],
+          ["Montevideo MVD", -34.84, -56.03],
+          ["London LHR", 51.47, -0.46],
+          ["London LGW", 51.15, -0.19],
+          ["London STN", 51.89, 0.26],
+          ["London LTN", 51.87, -0.37],
+          ["Manchester MAN", 53.35, -2.27],
+          ["Edinburgh EDI", 55.95, -3.37],
+          ["Dublin DUB", 53.42, -6.27],
+          ["Belfast BFS", 54.66, -6.22],
+          ["Paris CDG", 49.01, 2.55],
+          ["Paris ORY", 48.72, 2.36],
+          ["Amsterdam AMS", 52.31, 4.77],
+          ["Frankfurt FRA", 50.04, 8.56],
+          ["Munich MUC", 48.35, 11.79],
+          ["Berlin BER", 52.37, 13.5],
+          ["Madrid MAD", 40.47, -3.56],
+          ["Barcelona BCN", 41.3, 2.08],
+          ["Rome FCO", 41.8, 12.25],
+          ["Rome CIA", 41.8, 12.59],
+          ["Milan MXP", 45.63, 8.72],
+          ["Milan LIN", 45.45, 9.28],
+          ["Zurich ZRH", 47.46, 8.55],
+          ["Geneva GVA", 46.24, 6.11],
+          ["Vienna VIE", 48.11, 16.57],
+          ["Brussels BRU", 50.9, 4.48],
+          ["Lisbon LIS", 38.77, -9.13],
+          ["Porto OPO", 41.25, -8.68],
+          ["Athens ATH", 37.94, 23.94],
+          ["Istanbul IST", 41.28, 28.75],
+          ["Istanbul SAW", 40.9, 29.31],
+          ["Stockholm ARN", 59.65, 17.92],
+          ["Copenhagen CPH", 55.62, 12.65],
+          ["Oslo OSL", 60.19, 11.1],
+          ["Helsinki HEL", 60.32, 24.96],
+          ["Reykjavik KEF", 63.99, -22.61],
+          ["Moscow SVO", 55.97, 37.41],
+          ["Moscow DME", 55.41, 37.9],
+          ["Moscow VKO", 55.6, 37.29],
+          ["Warsaw WAW", 52.17, 20.97],
+          ["Prague PRG", 50.1, 14.26],
+          ["Budapest BUD", 47.44, 19.26],
+          ["Bucharest OTP", 44.57, 26.1],
+          ["Kyiv KBP", 50.34, 30.89],
+          ["Cairo CAI", 30.12, 31.41],
+          ["Johannesburg JNB", -26.13, 28.24],
+          ["Cape Town CPT", -33.97, 18.6],
+          ["Lagos LOS", 6.58, 3.32],
+          ["Nairobi NBO", -1.32, 36.93],
+          ["Addis Ababa ADD", 8.98, 38.8],
+          ["Casablanca CMN", 33.37, -7.59],
+          ["Accra ACC", 5.61, -0.17],
+          ["Dakar DSS", 14.67, -17.07],
+          ["Dubai DXB", 25.25, 55.36],
+          ["Dubai DWC", 24.9, 55.16],
+          ["Abu Dhabi AUH", 24.43, 54.65],
+          ["Doha DOH", 25.27, 51.61],
+          ["Riyadh RUH", 24.96, 46.7],
+          ["Jeddah JED", 21.68, 39.16],
+          ["Tel Aviv TLV", 32.01, 34.89],
+          ["Amman AMM", 31.72, 35.99],
+          ["Kuwait KWI", 29.23, 47.97],
+          ["Muscat MCT", 23.59, 58.28],
+          ["Bahrain BAH", 26.27, 50.63],
+          ["Tehran IKA", 35.42, 51.15],
+          ["Mumbai BOM", 19.09, 72.87],
+          ["Delhi DEL", 28.56, 77.1],
+          ["Bangalore BLR", 13.2, 77.71],
+          ["Chennai MAA", 12.99, 80.18],
+          ["Hyderabad HYD", 17.24, 78.43],
+          ["Kolkata CCU", 22.65, 88.45],
+          ["Ahmedabad AMD", 23.08, 72.63],
+          ["Karachi KHI", 24.91, 67.16],
+          ["Islamabad ISB", 33.55, 72.83],
+          ["Lahore LHE", 31.52, 74.4],
+          ["Dhaka DAC", 23.84, 90.4],
+          ["Colombo CMB", 7.18, 79.88],
+          ["Kathmandu KTM", 27.7, 85.36],
+          ["Tokyo HND", 35.55, 139.78],
+          ["Tokyo NRT", 35.76, 140.39],
+          ["Osaka KIX", 34.43, 135.24],
+          ["Osaka ITM", 34.79, 135.44],
+          ["Fukuoka FUK", 33.59, 130.45],
+          ["Sapporo CTS", 42.78, 141.69],
+          ["Seoul ICN", 37.46, 126.44],
+          ["Seoul GMP", 37.56, 126.79],
+          ["Busan PUS", 35.18, 128.94],
+          ["Beijing PEK", 40.08, 116.58],
+          ["Beijing PKX", 39.51, 116.41],
+          ["Shanghai PVG", 31.14, 121.81],
+          ["Shanghai SHA", 31.2, 121.34],
+          ["Guangzhou CAN", 23.39, 113.3],
+          ["Shenzhen SZX", 22.64, 113.81],
+          ["Chengdu CTU", 30.58, 103.95],
+          ["Chongqing CKG", 29.72, 106.64],
+          ["Xi'an XIY", 34.45, 108.75],
+          ["Hangzhou HGH", 30.23, 120.43],
+          ["Hong Kong HKG", 22.31, 113.91],
+          ["Taipei TPE", 25.08, 121.23],
+          ["Taipei TSA", 25.07, 121.55],
+          ["Manila MNL", 14.51, 121.02],
+          ["Cebu CEB", 10.31, 123.98],
+          ["Bangkok BKK", 13.69, 100.75],
+          ["Bangkok DMK", 13.91, 100.61],
+          ["Singapore SIN", 1.36, 103.99],
+          ["Kuala Lumpur KUL", 2.75, 101.71],
+          ["Kuala Lumpur SZB", 3.13, 101.55],
+          ["Jakarta CGK", -6.13, 106.66],
+          ["Jakarta HLP", -6.27, 106.89],
+          ["Denpasar DPS", -8.75, 115.17],
+          ["Ho Chi Minh SGN", 10.82, 106.65],
+          ["Hanoi HAN", 21.22, 105.81],
+          ["Phnom Penh PNH", 11.55, 104.84],
+          ["Sydney SYD", -33.95, 151.18],
+          ["Melbourne MEL", -37.67, 144.84],
+          ["Brisbane BNE", -27.38, 153.12],
+          ["Perth PER", -31.94, 115.97],
+          ["Adelaide ADL", -34.95, 138.53],
+          ["Cairns CNS", -16.89, 145.75],
+          ["Auckland AKL", -37.01, 174.79],
+          ["Wellington WLG", -41.33, 174.81],
+          ["Christchurch CHC", -43.49, 172.53],
+          ["Nadi NAN", -17.76, 177.44],
+          ["Papeete PPT", -17.55, -149.61],
+        ];
+
+        let cities = CITY_DATA.map((c) => ({
+          name: c[0],
+          lat: c[1],
+          lon: c[2],
+        }));
+        cities.forEach((c) => {
+          airportStats[c.name] = { in: 0, out: 0 };
+        });
+        sortedAirportNames = Object.keys(airportStats).sort((a, b) =>
+          a.localeCompare(b),
+        );
+
+        function projectCities() {
+          cities.forEach((c) => {
+            const p = project(c.lon, c.lat);
+            c.x = p[0];
+            c.y = p[1];
+          });
+        }
+
+        // ---- regions: used only to visualize RELATIVE, decaying traffic frequency ----
+        // (radius is a fraction of mapW, applied at render time)
+        const REGIONS_INFO = [
+          { name: "North America", lon: -100, lat: 45, radius: 0.24 },
+          {
+            name: "Central America & Caribbean",
+            lon: -85,
+            lat: 15,
+            radius: 0.11,
+          },
+          { name: "South America", lon: -60, lat: -15, radius: 0.17 },
+          { name: "Europe", lon: 15, lat: 50, radius: 0.11 },
+          { name: "Russia & Central Asia", lon: 80, lat: 55, radius: 0.24 },
+          { name: "Middle East", lon: 50, lat: 25, radius: 0.1 },
+          { name: "Africa", lon: 20, lat: 0, radius: 0.18 },
+          { name: "South Asia", lon: 78, lat: 22, radius: 0.11 },
+          { name: "East Asia", lon: 115, lat: 33, radius: 0.15 },
+          { name: "Southeast Asia", lon: 108, lat: 3, radius: 0.13 },
+          { name: "Oceania", lon: 155, lat: -27, radius: 0.22 },
+        ];
+
+        function angularDist(lon1, lat1, lon2, lat2) {
+          const a = toXYZ(lon1, lat1),
+            b = toXYZ(lon2, lat2);
+          const dot = Math.max(
+            -1,
+            Math.min(1, a[0] * b[0] + a[1] * b[1] + a[2] * b[2]),
+          );
+          return Math.acos(dot);
+        }
+        function nearestRegion(lon, lat) {
+          let best = REGIONS_INFO[0],
+            bd = Infinity;
+          for (const r of REGIONS_INFO) {
+            const d = angularDist(lon, lat, r.lon, r.lat);
+            if (d < bd) {
+              bd = d;
+              best = r;
+            }
+          }
+          return best;
+        }
+        const cityRegionByName = {};
+        cities.forEach((c) => {
+          c.region = nearestRegion(c.lon, c.lat).name;
+          cityRegionByName[c.name] = c.region;
+        });
+
+        const EARTH_RADIUS_KM = 6371;
+        function greatCircleKm(aLon, aLat, bLon, bLat) {
+          return angularDist(aLon, aLat, bLon, bLat) * EARTH_RADIUS_KM;
+        }
+
+        // decaying (not cumulative) activity — reflects CURRENT frequency, not lifetime totals,
+        // so glow brightness compares regions to each other right now rather than growing forever.
+        const regionActivity = {};
+        REGIONS_INFO.forEach((r) => {
+          regionActivity[r.name] = 0;
+        });
+        const heatActivity = {};
+        cities.forEach((c) => {
+          heatActivity[c.name] = 0;
+        });
+        const ACTIVITY_DECAY_PER_SEC = 0.965; // ~19s half-life
+        let lastDecayTime = performance.now();
+        let currentMaxAirportActivity = 0.0001;
+        let currentMaxRegionActivity = 0.0001;
+
+        function decayActivity(now) {
+          const dt = Math.min(2000, Math.max(0, now - lastDecayTime));
+          lastDecayTime = now;
+          const factor = Math.pow(ACTIVITY_DECAY_PER_SEC, dt / 1000);
+          let maxA = 0.0001,
+            maxR = 0.0001;
+          for (const k in heatActivity) {
+            const v = heatActivity[k] * factor;
+            heatActivity[k] = v;
+            if (v > maxA) maxA = v;
+          }
+          for (const k in regionActivity) {
+            const v = regionActivity[k] * factor;
+            regionActivity[k] = v;
+            if (v > maxR) maxR = v;
+          }
+          currentMaxAirportActivity = maxA;
+          currentMaxRegionActivity = maxR;
+        }
+
+        // ---- geo utils ----
+        function toXYZ(lon, lat) {
+          const la = (lat * Math.PI) / 180,
+            lo = (lon * Math.PI) / 180;
+          return [
+            Math.cos(la) * Math.cos(lo),
+            Math.cos(la) * Math.sin(lo),
+            Math.sin(la),
+          ];
+        }
+        function toLonLat(v) {
+          const lat =
+            (Math.asin(Math.max(-1, Math.min(1, v[2]))) * 180) / Math.PI;
+          const lon = (Math.atan2(v[1], v[0]) * 180) / Math.PI;
+          return [lon, lat];
+        }
+        function slerp(a, b, t) {
+          let dot = a[0] * b[0] + a[1] * b[1] + a[2] * b[2];
+          dot = Math.max(-1, Math.min(1, dot));
+          const theta = Math.acos(dot) * t;
+          const rel = [b[0] - a[0] * dot, b[1] - a[1] * dot, b[2] - a[2] * dot];
+          const len = Math.hypot(rel[0], rel[1], rel[2]) || 1e-9;
+          const u = [rel[0] / len, rel[1] / len, rel[2] / len];
+          return [
+            a[0] * Math.cos(theta) + u[0] * Math.sin(theta),
+            a[1] * Math.cos(theta) + u[1] * Math.sin(theta),
+            a[2] * Math.cos(theta) + u[2] * Math.sin(theta),
+          ];
+        }
+
+        // ---- flight management ----
+        const flights = [];
+        const MAX_FLIGHTS = 800;
+
+        function randCity(exclude) {
+          let c;
+          do {
+            c = cities[(Math.random() * cities.length) | 0];
+          } while (c === exclude);
+          return c;
+        }
+
+        // Distance-based duration: real great-circle km / type cruise speed, compressed for
+        // watchability, plus small per-flight variance (wind/traffic) — not a flat random range.
+        // This is what makes some flights genuinely slower and some genuinely faster.
+        const DUR_BASE_MS = 1350;
+        const DUR_K = 15.7;
+        const DUR_EXP = 0.72;
+
+        function computeDuration(distKm, type) {
+          const typeMul = REF_CRUISE_KMH / type.cruiseKmh; // faster cruise => shorter duration
+          let ms =
+            DUR_BASE_MS +
+            DUR_K * Math.pow(Math.max(distKm, 1), DUR_EXP) * typeMul;
+          const variance = 1 + (Math.random() - 0.5) * type.speedVar;
+          return Math.max(1400, ms * variance);
+        }
+
+        function makeFlight() {
+          const a = randCity(null),
+            b = randCity(a);
+          const va = toXYZ(a.lon, a.lat),
+            vb = toXYZ(b.lon, b.lat);
+          const steps = 80;
+          const pts = [];
+          for (let i = 0; i <= steps; i++) {
+            const v = slerp(va, vb, i / steps);
+            const [lon, lat] = toLonLat(v);
+            const [x, y] = project(lon, lat);
+            pts.push([x, y]);
+          }
+          const distKm = greatCircleKm(a.lon, a.lat, b.lon, b.lat);
+          const type = randomType();
+          const duration = computeDuration(distKm, type);
+          return {
+            pts,
+            from: a.name,
+            to: b.name,
+            distKm,
+            start: performance.now() + Math.random() * 400,
+            duration,
+            type,
+            fadeIn: 400,
+            fadeOut: 600,
+          };
+        }
+
+        function seedFlights() {
+          flights.length = 0;
+          const count = Math.round(MAX_FLIGHTS * 0.7);
+          for (let i = 0; i < count; i++) {
+            const f = makeFlight();
+            f.start = performance.now() - Math.random() * f.duration;
+            flights.push(f);
+          }
+        }
+
+        // Gives the dashboard a "already running" feel on load instead of starting at zero.
+        function primeSimulation() {
+          const now = Date.now();
+          const seedCount = 220 + Math.floor(Math.random() * 80);
+          for (let i = 0; i < seedCount; i++) {
+            const a = randCity(null),
+              b = randCity(a);
+            const distKm = greatCircleKm(a.lon, a.lat, b.lon, b.lat);
+            completedCount++;
+            totalDistanceKm += distKm;
+            airportStats[a.name].out++;
+            airportStats[b.name].in++;
+            const ageSec = Math.random() * 90;
+            if (ageSec < 60) completionTimestamps.push(now - ageSec * 1000);
+            const decayed = Math.pow(ACTIVITY_DECAY_PER_SEC, ageSec);
+            heatActivity[a.name] += decayed;
+            heatActivity[b.name] += decayed;
+            const rf = cityRegionByName[a.name],
+              rt = cityRegionByName[b.name];
+            if (rf) regionActivity[rf] += decayed;
+            if (rt) regionActivity[rt] += decayed;
+          }
+          for (let i = 5; i >= 1; i--) {
+            const a = randCity(null),
+              b = randCity(a);
+            recentRoutes.push({
+              from: a.name,
+              to: b.name,
+              t: now - i * 9000,
+              type: randomType().id,
+            });
+          }
+          recentRoutes.sort((x, y) => y.t - x.t);
+          decayActivity(performance.now());
+        }
+
+        function recordCompletion(f) {
+          completedCount++;
+          totalDistanceKm += f.distKm;
+          completionTimestamps.push(Date.now());
+          if (airportStats[f.from]) airportStats[f.from].out++;
+          if (airportStats[f.to]) airportStats[f.to].in++;
+          heatActivity[f.from] = (heatActivity[f.from] || 0) + 1;
+          heatActivity[f.to] = (heatActivity[f.to] || 0) + 1;
+          const rf = cityRegionByName[f.from],
+            rt = cityRegionByName[f.to];
+          if (rf) regionActivity[rf] = (regionActivity[rf] || 0) + 1;
+          if (rt) regionActivity[rt] = (regionActivity[rt] || 0) + 1;
+          recentRoutes.unshift({
+            from: f.from,
+            to: f.to,
+            t: Date.now(),
+            type: f.type.id,
+          });
+          if (recentRoutes.length > MAX_RECENT) recentRoutes.pop();
+          updateMetricsUI();
+        }
+
+        function buildAirportListHTML() {
+          return sortedAirportNames
+            .map((name) => {
+              const s = airportStats[name];
+              return `<div class="row"><span class="name" title="${name}">${name}</span>
+        <span class="counts"><span class="in">${s.in}</span> <span class="out">${s.out}</span></span></div>`;
+            })
+            .join("");
+        }
+
+        function buildFleetListHTML() {
+          const counts = {};
+          FLIGHT_TYPES.forEach((t) => {
+            counts[t.id] = 0;
+          });
+          flights.forEach((f) => {
+            counts[f.type.id]++;
+          });
+          const total = flights.length || 1;
+          return FLIGHT_TYPES.map((t) => {
+            const c = counts[t.id];
+            const pct = Math.round((c / total) * 100);
+            return `<div class="fleet-row">
+        <div class="fleet-top"><span><span class="fleet-dot" style="background:${t.glow}"></span>${t.label} ${t.id}</span><span>${c}</span></div>
+        <div class="fleet-bar-track"><div class="fleet-bar-fill" style="width:${pct}%;background:${t.glow}"></div></div>
+      </div>`;
+          }).join("");
+        }
+
+        function buildRegionListHTML() {
+          const entries = REGIONS_INFO.map((r) => ({
+            name: r.name,
+            v: regionActivity[r.name] || 0,
+          }));
+          entries.sort((a, b) => b.v - a.v);
+          const max = Math.max(entries[0] ? entries[0].v : 0, 0.0001);
+          return entries
+            .slice(0, 6)
+            .map((e) => {
+              const rel = e.v / max;
+              const pct = Math.max(3, Math.round(rel * 100));
+              const hue = 200 - rel * 165;
+              return `<div class="region-row">
+        <div class="region-top"><span>${e.name}</span></div>
+        <div class="region-bar-track"><div class="region-bar-fill" style="width:${pct}%;background:hsl(${hue.toFixed(0)},82%,56%)"></div></div>
+      </div>`;
+            })
+            .join("");
+        }
+
+        function updateMetricsUI() {
+          elCompleted.textContent = completedCount.toLocaleString();
+          elActive.textContent = flights.length;
+          elCities.textContent = cities.length;
+          elDistance.textContent = formatKm(totalDistanceKm);
+
+          const nowMs = Date.now();
+          while (
+            completionTimestamps.length &&
+            nowMs - completionTimestamps[0] > 60000
+          )
+            completionTimestamps.shift();
+          elRate.textContent = completionTimestamps.length;
+
+          const avgSpeed = flights.length
+            ? Math.round(
+                flights.reduce((s, f) => s + f.type.cruiseKmh, 0) /
+                  flights.length,
+              )
+            : 0;
+          elSpeed.textContent = avgSpeed.toLocaleString() + " km/h";
+
+          elFleet.innerHTML = buildFleetListHTML();
+          elRegions.innerHTML = buildRegionListHTML();
+
+          elRecent.innerHTML = recentRoutes
+            .map((r) => {
+              const ago = Math.max(0, Math.round((Date.now() - r.t) / 1000));
+              const agoStr = ago < 60 ? `${ago}s` : `${Math.floor(ago / 60)}m`;
+              const icon =
+                FLIGHT_TYPES.find((t) => t.id === r.type)?.label || "✈️";
+              return `<div class="row"><span class="fromto">${icon} ${r.from} → ${r.to}</span><span>${agoStr}</span></div>`;
+            })
+            .join("");
+          elAirportList.innerHTML = buildAirportListHTML();
+        }
+
+        // ---- drawing ----
+        function drawBase() {
+          ctx.fillStyle = "#0b1822";
+          ctx.strokeStyle = "rgba(120, 169, 190, 0.26)";
+          ctx.lineWidth = 0.7;
+          CONTINENTS.forEach(drawContinent);
+          drawTerminator();
+          drawTrafficHeat();
+          drawGraticule();
+
+          const atmosphere = ctx.createLinearGradient(
+            0,
+            PAD_Y,
+            0,
+            PAD_Y + mapH,
+          );
+          atmosphere.addColorStop(0, "rgba(82, 177, 207, 0.16)");
+          atmosphere.addColorStop(0.08, "rgba(25, 55, 72, 0)");
+          atmosphere.addColorStop(0.88, "rgba(25, 55, 72, 0)");
+          atmosphere.addColorStop(1, "rgba(82, 177, 207, 0.08)");
+          ctx.fillStyle = atmosphere;
+          ctx.fillRect(PAD_X, PAD_Y, mapW, mapH);
+
+          cities.forEach((c) => {
+            const rel = Math.min(
+              1,
+              (heatActivity[c.name] || 0) / currentMaxAirportActivity,
+            );
+            const hue = 195 - rel * 160;
+            ctx.beginPath();
+            ctx.arc(c.x, c.y, 1.15, 0, Math.PI * 2);
+            ctx.fillStyle = `hsl(${hue}, ${55 + rel * 45}%, ${76 + rel * 14}%)`;
+            ctx.fill();
+            ctx.beginPath();
+            ctx.arc(c.x, c.y, 3.2, 0, Math.PI * 2);
+            ctx.fillStyle = `hsla(${hue}, 94%, 64%, ${0.1 + rel * 0.24})`;
+            ctx.fill();
+          });
+        }
+
+        function easeInOutSine(t) {
+          return -(Math.cos(Math.PI * t) - 1) / 2;
+        }
+
+        const TRAIL_STEPS = 16;
+        const TRAIL_TOTAL_SPAN = 12.8; // index-units of the route the fading trail covers
+        const TRAIL_SPAN = TRAIL_TOTAL_SPAN / TRAIL_STEPS;
+
+        function drawFlight(f, now) {
+          let t = (now - f.start) / f.duration;
+          if (t < 0) return true;
+          if (t > 1) {
+            recordCompletion(f);
+            return false;
+          }
+          const n = f.pts.length;
+          const eased = easeInOutSine(t);
+          let envelope = 1;
+          if (t < f.fadeIn / f.duration)
+            envelope *= t / (f.fadeIn / f.duration);
+          if (t > 1 - f.fadeOut / f.duration)
+            envelope *= (1 - t) / (f.fadeOut / f.duration);
+
+          // faint, thin static backbone — keeps the route network visible without dominating
+          ctx.beginPath();
+          let prevX = null;
+          for (let i = 0; i < n; i++) {
+            const [x, y] = f.pts[i];
+            if (prevX !== null && Math.abs(x - prevX) > mapW * 0.5)
+              ctx.moveTo(x, y);
+            else if (i === 0) ctx.moveTo(x, y);
+            else ctx.lineTo(x, y);
+            prevX = x;
+          }
+          ctx.strokeStyle = f.type.trail + (0.055 * envelope).toFixed(3) + ")";
+          ctx.lineWidth = 0.28;
+          ctx.stroke();
+
+          const idxFloat = eased * (n - 1);
+          const idx = Math.min(n - 2, Math.max(0, Math.floor(idxFloat)));
+          const frac = idxFloat - idx;
+          const p0 = f.pts[idx],
+            p1 = f.pts[idx + 1];
+          let x1 = p1[0];
+          if (Math.abs(x1 - p0[0]) > mapW * 0.5) {
+            x1 += x1 < p0[0] ? mapW : -mapW;
+          }
+          let x = p0[0] + (x1 - p0[0]) * frac;
+          x = PAD_X + ((((x - PAD_X) % mapW) + mapW) % mapW);
+          const y = p0[1] + (p1[1] - p0[1]) * frac;
+
+          // thin comet trail that dissipates behind the aircraft as it travels
+          let prevTX = null,
+            prevTY = null;
+          for (let k = 0; k <= TRAIL_STEPS; k++) {
+            const ti = idxFloat - k * TRAIL_SPAN;
+            if (ti < 0) break;
+            const ii = Math.min(n - 2, Math.max(0, Math.floor(ti)));
+            const ff = ti - ii;
+            const tp0 = f.pts[ii],
+              tp1 = f.pts[Math.min(n - 1, ii + 1)];
+            const tx = tp0[0] + (tp1[0] - tp0[0]) * ff;
+            const ty = tp0[1] + (tp1[1] - tp0[1]) * ff;
+            if (prevTX !== null && Math.abs(tx - prevTX) < mapW * 0.5) {
+              const frac2 = k / TRAIL_STEPS;
+              const alpha = envelope * 0.6 * Math.pow(1 - frac2, 1.6);
+              const width = Math.max(0.15, 1.0 * (1 - frac2 * 0.85));
+              ctx.beginPath();
+              ctx.moveTo(prevTX, prevTY);
+              ctx.lineTo(tx, ty);
+              ctx.strokeStyle =
+                f.type.trail + Math.max(alpha, 0).toFixed(3) + ")";
+              ctx.lineWidth = width;
+              ctx.lineCap = "round";
+              ctx.stroke();
+            }
+            prevTX = tx;
+            prevTY = ty;
+          }
+
+          const glowAlpha = envelope;
+          ctx.save();
+          ctx.shadowColor = f.type.glow;
+          ctx.shadowBlur = 6;
+          ctx.beginPath();
+          ctx.arc(x, y, 1.2, 0, Math.PI * 2);
+          ctx.fillStyle = f.type.core;
+          ctx.globalAlpha = glowAlpha;
+          ctx.fill();
+          ctx.restore();
+
+          if (t < 0.06)
+            ringPulse(f.pts[0][0], f.pts[0][1], t / 0.06, f.type.glow);
+          if (t > 0.94)
+            ringPulse(
+              f.pts[n - 1][0],
+              f.pts[n - 1][1],
+              (t - 0.94) / 0.06,
+              f.type.glow,
+            );
+          return true;
+        }
+
+        function ringPulse(x, y, t, color) {
+          const r = 1.5 + t * 5;
+          ctx.beginPath();
+          ctx.arc(x, y, r, 0, Math.PI * 2);
+          ctx.strokeStyle = color;
+          ctx.globalAlpha = Math.max(0, 1 - t) * 0.45;
+          ctx.lineWidth = 0.7;
+          ctx.stroke();
+          ctx.globalAlpha = 1;
+        }
+        
+        // ---- click-to-zoom ----
+        let zoomAnim = null; // { from, to, startTime }
+        const ZOOM_DURATION = 700;
+
+        function getContinentAt(mx, my) {
+          for (let poly of CONTINENTS) {
+            let inside = false;
+            for (let i = 0, j = poly.length - 1; i < poly.length; j = i++) {
+              const [lon1, lat1] = poly[i];
+              const [lon2, lat2] = poly[j];
+              const [x1, y1] = project(lon1, lat1);
+              const [x2, y2] = project(lon2, lat2);
+              const intersect =
+                y1 > my !== y2 > my &&
+                mx < ((x2 - x1) * (my - y1)) / (y2 - y1) + x1;
+              if (intersect) inside = !inside;
+            }
+            if (inside) return poly;
+          }
+          return null;
+        }
+
+        function startZoom(poly) {
+          let minX = Infinity,
+            maxX = -Infinity,
+            minY = Infinity,
+            maxY = -Infinity;
+          for (let [lon, lat] of poly) {
+            const [x, y] = project(lon, lat);
+            if (x < minX) minX = x;
+            if (x > maxX) maxX = x;
+            if (y < minY) minY = y;
+            if (y > maxY) maxY = y;
+          }
+          const cx = (minX + maxX) / 2,
+            cy = (minY + maxY) / 2;
+          const w = maxX - minX,
+            h = maxY - minY;
+          const scaleX = mapW / (w + 40),
+            scaleY = mapH / (h + 40);
+          const targetScale = Math.min(scaleX, scaleY, 4.5);
+          const from = { cx: W / 2, cy: H / 2, scale: 1 };
+          const to = { cx, cy, scale: targetScale };
+          zoomAnim = { from, to, startTime: performance.now() };
+        }
+
+        function resetZoom() {
+          zoomAnim = {
+            from: { cx: W / 2, cy: H / 2, scale: 1 },
+            to: { cx: W / 2, cy: H / 2, scale: 1 },
+            startTime: performance.now(),
+          };
+        }
+
+        // ---- mouse events ----
+        canvas.addEventListener("click", (e) => {
+          const rect = canvas.getBoundingClientRect();
+          const mx = (e.clientX - rect.left) * (W / rect.width);
+          const my = (e.clientY - rect.top) * (H / rect.height);
+          const poly = getContinentAt(mx, my);
+          if (poly) {
+            startZoom(poly);
+          } else {
+            resetZoom();
+          }
+        });
+
+        // ---- tick ----
+        let lastMetricsUpdate = 0;
+
+        function tick(now) {
+          decayActivity(now);
+          ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+          drawBackdrop();
+
+          // apply zoom animation
+          if (zoomAnim) {
+            const progress = Math.min(
+              1,
+              (now - zoomAnim.startTime) / ZOOM_DURATION,
+            );
+            const ease = 1 - Math.pow(1 - progress, 3); // easeOutCubic
+            const from = zoomAnim.from,
+              to = zoomAnim.to;
+            const cx = from.cx + (to.cx - from.cx) * ease;
+            const cy = from.cy + (to.cy - from.cy) * ease;
+            const scale = from.scale + (to.scale - from.scale) * ease;
+            ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+            ctx.translate(cx, cy);
+            ctx.scale(scale, scale);
+            ctx.translate(-cx, -cy);
+            if (progress >= 1) {
+              // hold final state; keep anim but stop updating (still set transform)
+            }
+          } else {
+            ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+          }
+
+          drawBase();
+
+          for (let i = flights.length - 1; i >= 0; i--) {
+            if (!drawFlight(flights[i], now)) flights.splice(i, 1);
+          }
+          while (flights.length < MAX_FLIGHTS) flights.push(makeFlight());
+
+          if (now - lastMetricsUpdate > 500) {
+            updateMetricsUI();
+            lastMetricsUpdate = now;
+          }
+          requestAnimationFrame(tick);
+        }
+
+        // ---- init ----
+        window.addEventListener("resize", resize);
+        resize();
+        elCities.textContent = cities.length;
+        seedFlights();
+        primeSimulation();
+        updateMetricsUI();
+        updateClock();
+        setInterval(updateClock, 1000);
+        requestAnimationFrame(tick);
+      })();
+    </script>
+  </body>
+</html>

@@ -1,0 +1,967 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Kraken Order Book Depth Dashboard</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body {
+    width: 100%; height: 100%;
+    background: #0a0c10;
+    color: #c8d0dc;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    overflow: hidden;
+  }
+  #app {
+    display: grid;
+    grid-template-rows: auto 1fr;
+    height: 100vh;
+  }
+  header {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 10px 16px;
+    background: #0e1118;
+    border-bottom: 1px solid #1c2230;
+    flex-wrap: wrap;
+  }
+  header h1 {
+    font-size: 14px;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: #8b97a8;
+  }
+  select, button {
+    background: #161b26;
+    border: 1px solid #2a3344;
+    color: #e2e8f0;
+    padding: 6px 10px;
+    border-radius: 6px;
+    font-size: 13px;
+    cursor: pointer;
+  }
+  select:hover, button:hover { border-color: #4a5a72; }
+  .stat {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 90px;
+  }
+  .stat label {
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: #6b7686;
+  }
+  .stat strong {
+    font-size: 15px;
+    font-variant-numeric: tabular-nums;
+    color: #e8eef6;
+  }
+  .stat strong.up { color: #3dd68c; }
+  .stat strong.down { color: #f07178; }
+  #status {
+    margin-left: auto;
+    font-size: 12px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  #status .dot {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    background: #555;
+  }
+  #status.connected .dot { background: #3dd68c; box-shadow: 0 0 8px #3dd68c88; }
+  #status.error .dot { background: #f07178; }
+
+  #main {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(620px, 46vw);
+    min-height: 0;
+  }
+
+  #book {
+    border-left: 1px solid #1c2230;
+    background: #0c0f15;
+    display: flex;
+    flex-direction: column;
+    font-size: 11px;
+    min-width: 0;
+    overflow: hidden;
+  }
+
+  #book .titlebar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    padding: 8px 10px;
+    border-bottom: 1px solid #1c2230;
+    flex-wrap: wrap;
+  }
+
+  #book .title {
+    font-size: 10px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: #6b7686;
+  }
+
+  #depth-controls {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-wrap: wrap;
+  }
+
+  #depth-controls select,
+  #depth-controls button {
+    padding: 5px 7px;
+    font-size: 10px;
+  }
+
+  #depth-meta {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    padding: 5px 10px;
+    color: #667286;
+    border-bottom: 1px solid #1c2230;
+    font-size: 10px;
+    white-space: nowrap;
+    overflow: hidden;
+  }
+
+  #depth-meta span { overflow: hidden; text-overflow: ellipsis; }
+
+  #depth-table-wrap {
+    flex: 1;
+    min-height: 0;
+    overflow: auto;
+  }
+
+  #depth-table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+    font-variant-numeric: tabular-nums;
+  }
+
+  #depth-table th,
+  #depth-table td {
+    padding: 4px 8px;
+    border-bottom: 1px solid #151b25;
+    border-right: 1px solid #151b25;
+    text-align: right;
+    white-space: nowrap;
+    font-size: 10px;
+  }
+
+  #depth-table th {
+    position: sticky;
+    top: 0;
+    z-index: 4;
+    background: #111620;
+    color: #7f8b9d;
+    font-size: 9px;
+    letter-spacing: .04em;
+    text-transform: uppercase;
+    font-weight: 600;
+  }
+
+  #depth-table th:first-child,
+  #depth-table td:first-child {
+    position: sticky;
+    left: 0;
+    z-index: 5;
+    background: #10151e;
+    text-align: left;
+    min-width: 60px;
+  }
+
+  #depth-table th:first-child { z-index: 7; }
+
+  #depth-table .bid-col { color: #55d89a; }
+  #depth-table .ask-col { color: #f1848a; }
+  #depth-table .best-bid { background: rgba(61,214,140,.12); }
+  #depth-table .best-ask { background: rgba(240,113,120,.12); }
+  #depth-table .bid-depth { background: rgba(61,214,140,var(--depth-alpha)); }
+  #depth-table .ask-depth { background: rgba(240,113,120,var(--depth-alpha)); }
+  #depth-table .best-bid,
+  #depth-table .best-ask { box-shadow: inset 0 0 0 1px currentColor; }
+  #depth-table .price-cell { color: #dfe6ef; font-weight: 600; }
+  #depth-table .empty { color: #414b5b; }
+  #depth-table .timestamp-cell { color: #8b97a8; font-size: 9px; }
+
+  #spread-row {
+    padding: 6px 10px;
+    text-align: center;
+    border-top: 1px solid #1c2230;
+    border-bottom: 1px solid #1c2230;
+    color: #8b97a8;
+    font-size: 11px;
+  }
+
+  @media (max-width: 1100px) {
+    #main { grid-template-columns: 1fr; grid-template-rows: 52vh 48vh; }
+    #book { border-left: 0; border-top: 1px solid #1c2230; }
+  }
+  #chart-wrap {
+    position: relative;
+    min-width: 0;
+    min-height: 0;
+  }
+  canvas#heatmap {
+    display: block;
+    width: 100%;
+    height: 100%;
+  }
+  #legend {
+    position: absolute;
+    left: 12px;
+    bottom: 12px;
+    font-size: 10px;
+    color: #6b7686;
+    background: rgba(10,12,16,0.75);
+    padding: 6px 10px;
+    border-radius: 6px;
+    pointer-events: none;
+  }
+  #legend span { margin-right: 10px; }
+  .bid-swatch { color: #3dd68c; }
+  .ask-swatch { color: #f07178; }
+</style>
+</head>
+<body>
+<div id="app">
+  <header>
+    <h1>Kraken Depth Map</h1>
+    <select id="pair">
+      <option value="XBT/USD">BTC / USD</option>
+      <option value="ETH/USD">ETH / USD</option>
+      <option value="SOL/USD">SOL / USD</option>
+      <option value="XRP/USD">XRP / USD</option>
+      <option value="ADA/USD">ADA / USD</option>
+      <option value="DOT/USD">DOT / USD</option>
+      <option value="LINK/USD">LINK / USD</option>
+      <option value="LTC/USD">LTC / USD</option>
+      <option value="AVAX/USD">AVAX / USD</option>
+      <option value="DOGE/USD">DOGE / USD</option>
+    </select>
+    <button id="reconnect">Reconnect</button>
+
+    <div class="stat">
+      <label>Last</label>
+      <strong id="last">—</strong>
+    </div>
+    <div class="stat">
+      <label>Bid</label>
+      <strong id="bid" class="up">—</strong>
+    </div>
+    <div class="stat">
+      <label>Ask</label>
+      <strong id="ask" class="down">—</strong>
+    </div>
+    <div class="stat">
+      <label>Spread</label>
+      <strong id="spread">—</strong>
+    </div>
+    <div class="stat">
+      <label>24h Vol</label>
+      <strong id="vol">—</strong>
+    </div>
+
+    <div id="status"><span class="dot"></span><span id="status-text">Connecting…</span></div>
+  </header>
+
+  <div id="main">
+    <div id="chart-wrap">
+      <canvas id="heatmap"></canvas>
+      <div id="legend">
+        <span class="bid-swatch">■ Bids (buy)</span>
+        <span class="ask-swatch">■ Asks (sell)</span>
+        <span>— Price</span>
+        &nbsp;· depth intensity grows with size
+      </div>
+    </div>
+    <aside id="book">
+      <div class="titlebar">
+        <div class="title">Order Book Depth Over Time</div>
+        <div id="depth-controls">
+          <select id="snapshot-interval">
+            <option value="1000">1 sec</option>
+            <option value="5000">5 sec</option>
+            <option value="60000" selected>1 min</option>
+            <option value="300000">5 min</option>
+          </select>
+          <select id="depth-levels">
+            <option value="10">10 levels</option>
+            <option value="25">25 levels</option>
+            <option value="50" selected>50 levels</option>
+            <option value="100">100 levels</option>
+            <option value="0">All levels</option>
+          </select>
+          <button id="export-csv">CSV</button>
+          <button id="export-xlsx">Excel</button>
+          <button id="clear-depth">Clear</button>
+        </div>
+      </div>
+      <div id="depth-meta">
+        <span id="depth-status">Waiting for depth snapshots…</span>
+        <span id="depth-count">0 snapshots</span>
+      </div>
+      <div id="depth-table-wrap">
+        <table id="depth-table">
+          <thead id="depth-head"></thead>
+          <tbody id="depth-body"></tbody>
+        </table>
+      </div>
+      <div id="spread-row">Spread —</div>
+    </aside>
+  </div>
+</div>
+
+<script>
+(function () {
+  const WS_URL = 'wss://ws.kraken.com/';
+  const BOOK_DEPTH = 25;
+  const HISTORY_LEN = 180;
+  const SAMPLE_MS = 1000;
+  const MAX_SNAPSHOT_COLUMNS = 100;
+
+  const canvas = document.getElementById('heatmap');
+  const ctx = canvas.getContext('2d');
+
+  // ---- DOM refs ----
+  const pairEl = document.getElementById('pair');
+  const lastEl = document.getElementById('last');
+  const bidEl = document.getElementById('bid');
+  const askEl = document.getElementById('ask');
+  const spreadEl = document.getElementById('spread');
+  const volEl = document.getElementById('vol');
+  const statusEl = document.getElementById('status');
+  const statusTextEl = document.getElementById('status-text');
+  const spreadRowEl = document.getElementById('spread-row');
+  const reconnectBtn = document.getElementById('reconnect');
+  const snapshotIntervalEl = document.getElementById('snapshot-interval');
+  const depthLevelsEl = document.getElementById('depth-levels');
+  const exportCsvBtn = document.getElementById('export-csv');
+  const exportXlsxBtn = document.getElementById('export-xlsx');
+  const clearDepthBtn = document.getElementById('clear-depth');
+  const depthHead = document.getElementById('depth-head');
+  const depthBody = document.getElementById('depth-body');
+  const depthStatus = document.getElementById('depth-status');
+  const depthCount = document.getElementById('depth-count');
+
+  let ws = null;
+  let pair = pairEl.value;
+  let bids = new Map();
+  let asks = new Map();
+  let lastPrice = null;
+  let bestBid = null, bestAsk = null;
+  let vol24 = null;
+  let history = [];
+  let depthSnapshots = [];
+  let sampleTimer = null;
+  let depthSnapshotTimer = null;
+  let animId = null;
+
+  function setStatus(state, text) {
+    statusEl.className = state || '';
+    statusTextEl.textContent = text;
+  }
+
+  function fmt(n, d = 2) {
+    if (n === null || n === undefined || !Number.isFinite(Number(n))) return '—';
+    n = Number(n);
+    if (n >= 1000) return n.toLocaleString(undefined, { maximumFractionDigits: d });
+    if (n >= 1) return n.toFixed(d);
+    return n.toPrecision(Math.max(4, d + 1));
+  }
+
+  function fmtVol(n) {
+    if (n == null) return '—';
+    if (n >= 1e6) return (n / 1e6).toFixed(2) + 'M';
+    if (n >= 1e3) return (n / 1e3).toFixed(1) + 'K';
+    return n.toFixed(2);
+  }
+
+  // ---------- Order book ----------
+  function applyLevels(sideMap, updates) {
+    for (const row of updates) {
+      const price = row[0];
+      const vol = parseFloat(row[1]);
+      if (vol === 0) sideMap.delete(price);
+      else sideMap.set(price, vol);
+    }
+  }
+
+  function sortedBids() {
+    return [...bids.entries()]
+      .map(([p, v]) => [parseFloat(p), v, p])
+      .sort((a, b) => b[0] - a[0]);
+  }
+  function sortedAsks() {
+    return [...asks.entries()]
+      .map(([p, v]) => [parseFloat(p), v, p])
+      .sort((a, b) => a[0] - b[0]);
+  }
+
+  function updateBBO() {
+    const b = sortedBids()[0];
+    const a = sortedAsks()[0];
+    bestBid = b ? b[0] : null;
+    bestAsk = a ? a[0] : null;
+    bidEl.textContent = fmt(bestBid, bestBid != null && bestBid >= 100 ? 2 : 4);
+    askEl.textContent = fmt(bestAsk, bestAsk != null && bestAsk >= 100 ? 2 : 4);
+    if (bestBid != null && bestAsk != null) {
+      const sp = bestAsk - bestBid;
+      const pct = (sp / bestBid) * 100;
+      spreadEl.textContent = fmt(sp, sp < 1 ? 4 : 2) + ` (${pct.toFixed(3)}%)`;
+      spreadRowEl.textContent = `Spread ${fmt(sp, sp < 1 ? 4 : 2)} (${pct.toFixed(3)}%)`;
+    }
+  }
+
+  // ---------- Depth snapshots ----------
+  function snapshotLevels() {
+    const bidCopy = new Map(bids);
+    const askCopy = new Map(asks);
+    const sb = sortedBids();
+    const sa = sortedAsks();
+    const b = sb.length ? sb[0][0] : null;
+    const a = sa.length ? sa[0][0] : null;
+    return {
+      t: Date.now(),
+      bids: bidCopy,
+      asks: askCopy,
+      bestBid: b,
+      bestAsk: a,
+      spread: (b != null && a != null) ? a - b : null
+    };
+  }
+
+  function formatSnapshotTime(ts) {
+    const d = new Date(Number(ts));
+    if (!Number.isFinite(d.getTime())) return '—';
+    return d.toLocaleTimeString(undefined, {
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit'
+    });
+  }
+
+  function getDisplayPrices() {
+    const levelLimit = Number.parseInt(depthLevelsEl.value, 10) || 50;
+    const prices = new Set();
+
+    for (const s of depthSnapshots) {
+      if (!(s.bids instanceof Map) || !(s.asks instanceof Map)) continue;
+      for (const p of s.bids.keys()) prices.add(String(p));
+      for (const p of s.asks.keys()) prices.add(String(p));
+    }
+
+    let sorted = [...prices].map(p => Number(p)).filter(Number.isFinite);
+
+    const mid = (bestBid != null && bestAsk != null)
+      ? (bestBid + bestAsk) / 2
+      : (lastPrice != null ? lastPrice : null);
+
+    if (mid != null && Number.isFinite(mid)) {
+      sorted.sort((a, b) => Math.abs(a - mid) - Math.abs(b - mid));
+    } else {
+      sorted.sort((a, b) => b - a);
+    }
+
+    if (levelLimit === 0) return sorted.sort((a, b) => b - a);
+    return sorted.slice(0, levelLimit).sort((a, b) => b - a);
+  }
+
+  function mergeVolumeMaps(previous, current, sampleCount) {
+    const merged = new Map();
+    const prices = new Set([...previous.keys(), ...current.keys()]);
+    for (const price of prices) {
+      const oldValue = Number(previous.get(price) || 0);
+      const newValue = Number(current.get(price) || 0);
+      const average = ((oldValue * (sampleCount - 1)) + newValue) / sampleCount;
+      if (average > 0) merged.set(price, average);
+    }
+    return merged;
+  }
+
+  function aggregateMinuteSnapshot(snapshot) {
+    const minute = Math.floor(snapshot.t / 60000) * 60000;
+    const previous = depthSnapshots[depthSnapshots.length - 1];
+    if (!previous || previous.minute !== minute) {
+      depthSnapshots.push({ ...snapshot, t: minute, minute, samples: 1 });
+      return;
+    }
+
+    const sampleCount = previous.samples + 1;
+    previous.bids = mergeVolumeMaps(previous.bids, snapshot.bids, sampleCount);
+    previous.asks = mergeVolumeMaps(previous.asks, snapshot.asks, sampleCount);
+    previous.bestBid = snapshot.bestBid;
+    previous.bestAsk = snapshot.bestAsk;
+    previous.spread = snapshot.spread;
+    previous.samples = sampleCount;
+  }
+
+  function volumeAt(snapshot, side, price) {
+    if (!snapshot) return 0;
+    const map = side === 'bid' ? snapshot.bids : snapshot.asks;
+    if (!(map instanceof Map)) return 0;
+    const exact = map.get(String(price));
+    if (exact !== undefined) {
+      const n = Number(exact);
+      return Number.isFinite(n) ? n : 0;
+    }
+    for (const [key, value] of map.entries()) {
+      if (Number(key) === Number(price)) {
+        const n = Number(value);
+        return Number.isFinite(n) ? n : 0;
+      }
+    }
+    return 0;
+  }
+
+  function renderDepthTable() {
+    if (!depthHead || !depthBody) return;
+
+    const prices = getDisplayPrices();
+    const snaps = depthSnapshots.slice(-MAX_SNAPSHOT_COLUMNS);
+
+    // Build header: timestamp column + price columns (each price gets Bid and Ask sub-columns)
+    let headerRow = '<tr><th>Timestamp</th>';
+    for (const price of prices) {
+      headerRow += `<th colspan="2">${fmt(price, price >= 100 ? 2 : 6)}</th>`;
+    }
+    headerRow += '</tr>';
+    
+    // Sub-header: Bid/Ask labels
+    let subHeaderRow = '<tr><th>Time</th>';
+    for (let i = 0; i < prices.length; i++) {
+      subHeaderRow += '<th class="bid-col">Bid</th><th class="ask-col">Ask</th>';
+    }
+    subHeaderRow += '</tr>';
+    
+    depthHead.innerHTML = headerRow + subHeaderRow;
+
+    if (!snaps.length || !prices.length) {
+      depthBody.innerHTML = '<tr><td class="empty" colspan="' + (prices.length * 2 + 1) + '">Waiting for live order-book data…</td></tr>';
+      return;
+    }
+
+    let maxBidVolume = 0;
+    let maxAskVolume = 0;
+    for (const snapshot of snaps) {
+      for (const price of prices) {
+        maxBidVolume = Math.max(maxBidVolume, volumeAt(snapshot, 'bid', price));
+        maxAskVolume = Math.max(maxAskVolume, volumeAt(snapshot, 'ask', price));
+      }
+    }
+    maxBidVolume = maxBidVolume || 1;
+    maxAskVolume = maxAskVolume || 1;
+
+    // Build rows: each row is a timestamp with bid/ask volumes for each price
+    const rows = [];
+    for (const s of snaps) {
+      const timeLabel = formatSnapshotTime(s.t);
+      let row = `<tr><td class="timestamp-cell">${timeLabel}</td>`;
+      
+      for (const price of prices) {
+        const bv = volumeAt(s, 'bid', price);
+        const av = volumeAt(s, 'ask', price);
+        const isBestBid = s.bestBid != null && Math.abs(price - s.bestBid) < 1e-10;
+        const isBestAsk = s.bestAsk != null && Math.abs(price - s.bestAsk) < 1e-10;
+        
+        const bidIntensity = bv > 0 ? 0.08 + Math.pow(bv / maxBidVolume, 0.55) * 0.72 : 0;
+        const askIntensity = av > 0 ? 0.08 + Math.pow(av / maxAskVolume, 0.55) * 0.72 : 0;
+        row += `<td style="--depth-alpha:${bidIntensity.toFixed(3)}" class="bid-col bid-depth ${isBestBid ? 'best-bid' : ''} ${bv === 0 ? 'empty' : ''}">${bv > 0 ? fmtVol(bv) : '—'}</td>`;
+        row += `<td style="--depth-alpha:${askIntensity.toFixed(3)}" class="ask-col ask-depth ${isBestAsk ? 'best-ask' : ''} ${av === 0 ? 'empty' : ''}">${av > 0 ? fmtVol(av) : '—'}</td>`;
+      }
+      row += '</tr>';
+      rows.push(row);
+    }
+
+    depthBody.innerHTML = rows.join('');
+
+    const snapshotCount = depthSnapshots.length;
+    const priceCount = prices.length;
+    if (depthCount) {
+      depthCount.textContent = `${snapshotCount.toLocaleString()} snapshots · ${priceCount.toLocaleString()} price levels`;
+    }
+    if (depthStatus) {
+      const interval = Number.parseInt(snapshotIntervalEl.value, 10) || 1000;
+      depthStatus.textContent = snapshotCount
+        ? `Aggregated per minute · Bid ${fmt(bestBid, bestBid != null && bestBid >= 100 ? 2 : 6)} · Ask ${fmt(bestAsk, bestAsk != null && bestAsk >= 100 ? 2 : 6)}`
+        : 'Waiting for live order-book data…';
+    }
+  }
+
+  function formatInterval(ms) {
+    if (!Number.isFinite(ms)) return '—';
+    if (ms < 60000) return `${ms / 1000}s`;
+    return `${ms / 60000}m`;
+  }
+
+  function captureDepthSnapshot() {
+    if (!bids.size && !asks.size) return;
+    aggregateMinuteSnapshot(snapshotLevels());
+    if (depthSnapshots.length > 5000) depthSnapshots.shift();
+    renderDepthTable();
+  }
+
+  function restartDepthSnapshotTimer() {
+    if (depthSnapshotTimer) {
+      clearInterval(depthSnapshotTimer);
+      depthSnapshotTimer = null;
+    }
+    const interval = Number.parseInt(snapshotIntervalEl.value, 10) || 1000;
+    depthSnapshotTimer = setInterval(renderDepthTable, interval);
+    renderDepthTable();
+  }
+
+  // ---------- CSV / Excel export ----------
+  function csvEscape(value) {
+    const s = String(value ?? '');
+    return /[",\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
+  }
+
+  function exportCSV() {
+    if (!depthSnapshots.length) { alert('No depth snapshots.'); return; }
+    const prices = getDisplayPrices();
+    const snaps = depthSnapshots.slice();
+    
+    // Header: Timestamp + Price columns (Bid/Ask)
+    let header = ['Timestamp'];
+    for (const price of prices) {
+      header.push(`${fmt(price)} Bid`, `${fmt(price)} Ask`);
+    }
+    
+    const lines = [header.map(csvEscape).join(',')];
+    
+    for (const s of snaps) {
+      const row = [new Date(s.t).toISOString()];
+      for (const price of prices) {
+        row.push(volumeAt(s, 'bid', price) || '', volumeAt(s, 'ask', price) || '');
+      }
+      lines.push(row.map(csvEscape).join(','));
+    }
+    
+    const blob = new Blob([lines.join('\n')], { type: 'text/csv;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `kraken_${pair.replace('/', '-')}_depth_${new Date().toISOString().replace(/[:.]/g, '-')}.csv`;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
+  }
+
+  function exportExcel() {
+    if (!depthSnapshots.length) { alert('No depth snapshots.'); return; }
+    const prices = getDisplayPrices();
+    const snaps = depthSnapshots.slice();
+    
+    const esc = s => String(s ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+    let xml = `<?xml version="1.0"?><?mso-application progid="Excel.Sheet"?>
+<Workbook xmlns="urn:schemas-microsoft-com:office:spreadsheet" xmlns:ss="urn:schemas-microsoft-com:office:spreadsheet">
+<Worksheet ss:Name="Depth"><Table>`;
+    
+    // Header
+    xml += '<Row><Cell><Data ss:Type="String">Timestamp</Data></Cell>';
+    for (const price of prices) {
+      xml += `<Cell><Data ss:Type="String">${esc(fmt(price))} Bid</Data></Cell>`;
+      xml += `<Cell><Data ss:Type="String">${esc(fmt(price))} Ask</Data></Cell>`;
+    }
+    xml += '</Row>';
+    
+    // Data rows
+    for (const s of snaps) {
+      xml += `<Row><Cell><Data ss:Type="String">${esc(new Date(s.t).toISOString())}</Data></Cell>`;
+      for (const price of prices) {
+        xml += `<Cell><Data ss:Type="Number">${volumeAt(s, 'bid', price)}</Data></Cell>`;
+        xml += `<Cell><Data ss:Type="Number">${volumeAt(s, 'ask', price)}</Data></Cell>`;
+      }
+      xml += '</Row>';
+    }
+    
+    xml += '</Table></Worksheet></Workbook>';
+    const blob = new Blob([xml], { type: 'application/vnd.ms-excel;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `kraken_${pair.replace('/', '-')}_depth_${new Date().toISOString().replace(/[:.]/g, '-')}.xls`;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
+  }
+
+  // ---------- Heatmap snapshot ----------
+  function snapshotDepth() {
+    const sb = sortedBids().slice(0, BOOK_DEPTH);
+    const sa = sortedAsks().slice(0, BOOK_DEPTH);
+    const mid = (bestBid != null && bestAsk != null) ? (bestBid + bestAsk) / 2 : lastPrice;
+    const levels = [];
+    for (const [p, v] of sb) levels.push({ price: p, side: 'bid', size: v });
+    for (const [p, v] of sa) levels.push({ price: p, side: 'ask', size: v });
+    history.push({ t: Date.now(), mid, last: lastPrice, levels });
+    if (history.length > HISTORY_LEN) history.shift();
+  }
+
+  // ---------- WebSocket ----------
+  function connect() {
+    if (ws) {
+      try { ws.close(); } catch (_) {}
+      ws = null;
+    }
+    bids.clear();
+    asks.clear();
+    history = [];
+    setStatus('', 'Connecting…');
+
+    ws = new WebSocket(WS_URL);
+
+    ws.onopen = () => {
+      setStatus('connected', 'Connected · ' + pair);
+      ws.send(JSON.stringify({
+        event: 'subscribe',
+        pair: [pair],
+        subscription: { name: 'book', depth: BOOK_DEPTH }
+      }));
+      ws.send(JSON.stringify({
+        event: 'subscribe',
+        pair: [pair],
+        subscription: { name: 'ticker' }
+      }));
+    };
+
+    ws.onmessage = (ev) => {
+      let msg;
+      try { msg = JSON.parse(ev.data); } catch { return; }
+
+      if (msg.event === 'subscriptionStatus') {
+        if (msg.status === 'subscribed') {
+          setStatus('connected', 'Live · ' + pair);
+        } else if (msg.status === 'error') {
+          setStatus('error', msg.errorMessage || 'Subscribe error');
+        }
+        return;
+      }
+      if (msg.event) return;
+
+      if (!Array.isArray(msg)) return;
+      const data = msg[1];
+      const chName = msg[msg.length - 2];
+
+      if (data && data.as && data.bs) {
+        asks.clear();
+        bids.clear();
+        applyLevels(asks, data.as);
+        applyLevels(bids, data.bs);
+        updateBBO();
+        return;
+      }
+
+      if (chName && String(chName).startsWith('book')) {
+        for (let i = 1; i < msg.length - 2; i++) {
+          const part = msg[i];
+          if (!part || typeof part !== 'object') continue;
+          if (part.a) applyLevels(asks, part.a);
+          if (part.b) applyLevels(bids, part.b);
+        }
+        updateBBO();
+        return;
+      }
+
+      if (data && data.c && data.a && data.b) {
+        lastPrice = parseFloat(data.c[0]);
+        lastEl.textContent = fmt(lastPrice, lastPrice >= 100 ? 2 : 4);
+        if (data.v) {
+          vol24 = parseFloat(data.v[1]);
+          volEl.textContent = fmtVol(vol24);
+        }
+        if (data.b) bestBid = parseFloat(data.b[0]);
+        if (data.a) bestAsk = parseFloat(data.a[0]);
+        bidEl.textContent = fmt(bestBid, bestBid != null && bestBid >= 100 ? 2 : 4);
+        askEl.textContent = fmt(bestAsk, bestAsk != null && bestAsk >= 100 ? 2 : 4);
+        if (bestBid != null && bestAsk != null) {
+          const sp = bestAsk - bestBid;
+          const pct = bestBid ? (sp / bestBid) * 100 : 0;
+          spreadEl.textContent = fmt(sp, sp < 1 ? 6 : 2) + ` (${pct.toFixed(3)}%)`;
+          spreadRowEl.textContent = `Spread ${fmt(sp, sp < 1 ? 6 : 2)} (${pct.toFixed(3)}%)`;
+        }
+      }
+    };
+
+    ws.onerror = () => setStatus('error', 'WebSocket error');
+    ws.onclose = () => {
+      setStatus('error', 'Disconnected');
+      setTimeout(() => {
+        if (pairEl.value === pair) connect();
+      }, 3000);
+    };
+  }
+
+  // ---------- Heatmap drawing ----------
+  function resize() {
+    const wrap = document.getElementById('chart-wrap');
+    const dpr = Math.min(window.devicePixelRatio || 1, 2);
+    const w = wrap.clientWidth;
+    const h = wrap.clientHeight;
+    canvas.width = w * dpr;
+    canvas.height = h * dpr;
+    canvas.style.width = w + 'px';
+    canvas.style.height = h + 'px';
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  }
+
+  function priceRange() {
+    if (!history.length) {
+      const mid = lastPrice || bestBid || 1;
+      return { min: mid * 0.995, max: mid * 1.005 };
+    }
+    let min = Infinity, max = -Infinity;
+    for (const col of history) {
+      for (const lv of col.levels) {
+        if (lv.price < min) min = lv.price;
+        if (lv.price > max) max = lv.price;
+      }
+      if (col.mid != null) { min = Math.min(min, col.mid); max = Math.max(max, col.mid); }
+    }
+    if (!isFinite(min) || !isFinite(max) || min === max) {
+      const mid = lastPrice || 1;
+      return { min: mid * 0.995, max: mid * 1.005 };
+    }
+    const pad = (max - min) * 0.08 || max * 0.001;
+    return { min: min - pad, max: max + pad };
+  }
+
+  function draw() {
+    const w = canvas.clientWidth;
+    const h = canvas.clientHeight;
+    ctx.fillStyle = '#0a0c10';
+    ctx.fillRect(0, 0, w, h);
+
+    const padL = 64, padR = 12, padT = 12, padB = 28;
+    const plotW = w - padL - padR;
+    const plotH = h - padT - padB;
+    const { min: pMin, max: pMax } = priceRange();
+    const pSpan = pMax - pMin || 1;
+
+    function yOf(price) { return padT + (1 - (price - pMin) / pSpan) * plotH; }
+
+    ctx.strokeStyle = '#1a2030';
+    ctx.lineWidth = 1;
+    const gridN = 6;
+    ctx.font = '10px -apple-system, sans-serif';
+    ctx.fillStyle = '#5a6575';
+    ctx.textAlign = 'right';
+    for (let i = 0; i <= gridN; i++) {
+      const p = pMin + (pSpan * i) / gridN;
+      const y = yOf(p);
+      ctx.beginPath();
+      ctx.moveTo(padL, y);
+      ctx.lineTo(w - padR, y);
+      ctx.stroke();
+      ctx.fillText(fmt(p, p >= 100 ? 2 : 4), padL - 6, y + 3);
+    }
+
+    if (history.length < 1) {
+      ctx.fillStyle = '#5a6575';
+      ctx.textAlign = 'center';
+      ctx.fillText('Waiting for order book data…', padL + plotW / 2, padT + plotH / 2);
+      animId = requestAnimationFrame(draw);
+      return;
+    }
+
+    let maxSize = 0;
+    for (const col of history) for (const lv of col.levels) if (lv.size > maxSize) maxSize = lv.size;
+    maxSize = maxSize || 1;
+    const colW = plotW / Math.max(history.length, 1);
+
+    for (let i = 0; i < history.length; i++) {
+      const col = history[i];
+      const x = padL + i * colW;
+      for (const lv of col.levels) {
+        const intensity = Math.min(1, Math.pow(lv.size / maxSize, 0.55));
+        const y = yOf(lv.price);
+        const band = Math.max(2, plotH * 0.012);
+        ctx.fillStyle = lv.side === 'bid'
+          ? `rgba(61, 214, 140, ${0.08 + intensity * 0.72})`
+          : `rgba(240, 113, 120, ${0.08 + intensity * 0.72})`;
+        ctx.fillRect(x, y - band / 2, Math.ceil(colW) + 0.5, band);
+      }
+    }
+
+    const lastCol = history[history.length - 1];
+    const priceLine = lastCol.last ?? lastCol.mid;
+    if (priceLine != null) {
+      const y = yOf(priceLine);
+      ctx.strokeStyle = '#e8eef6';
+      ctx.lineWidth = 1.25;
+      ctx.setLineDash([4, 3]);
+      ctx.beginPath();
+      ctx.moveTo(padL, y);
+      ctx.lineTo(w - padR, y);
+      ctx.stroke();
+      ctx.setLineDash([]);
+      ctx.fillStyle = '#e8eef6';
+      ctx.textAlign = 'left';
+      ctx.fillText(fmt(priceLine, priceLine >= 100 ? 2 : 4), padL + 4, y - 4);
+    }
+
+    ctx.fillStyle = '#5a6575';
+    ctx.textAlign = 'center';
+    if (history.length > 1) {
+      const t0 = history[0].t;
+      const t1 = history[history.length - 1].t;
+      for (let i = 0; i < 4; i++) {
+        const frac = i / 3;
+        const x = padL + frac * plotW;
+        const t = new Date(t0 + (t1 - t0) * frac);
+        ctx.fillText(t.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit', second: '2-digit' }), x, h - 8);
+      }
+    }
+    animId = requestAnimationFrame(draw);
+  }
+
+  // ---------- Bootstrap ----------
+  pairEl.addEventListener('change', () => {
+    pair = pairEl.value;
+    depthSnapshots = [];
+    renderDepthTable();
+    connect();
+  });
+
+  reconnectBtn.addEventListener('click', connect);
+
+  snapshotIntervalEl.addEventListener('change', restartDepthSnapshotTimer);
+  depthLevelsEl.addEventListener('change', renderDepthTable);
+  exportCsvBtn.addEventListener('click', exportCSV);
+  exportXlsxBtn.addEventListener('click', exportExcel);
+  clearDepthBtn.addEventListener('click', () => {
+    depthSnapshots = [];
+    renderDepthTable();
+  });
+
+  window.addEventListener('resize', resize);
+  resize();
+  connect();
+  sampleTimer = setInterval(() => {
+    snapshotDepth();
+    captureDepthSnapshot();
+  }, SAMPLE_MS);
+  restartDepthSnapshotTimer();
+  renderDepthTable();
+  animId = requestAnimationFrame(draw);
+})();
+</script>
+</body>
+</html>
