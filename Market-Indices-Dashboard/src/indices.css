@@ -1,0 +1,132 @@
+.market-indices {
+  position: absolute;
+  top: 65px;
+  right: 15px;
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  max-width: 58%;
+  text-align: right;
+}
+
+.market-index {
+  min-width: 0;
+  color: var(--txt);
+}
+
+.market-index-name {
+  color: var(--muted);
+  font-size: 10px;
+  font-weight: 750;
+  white-space: nowrap;
+}
+
+.market-index-status {
+  color: #71818b;
+  font-size: 8px;
+  letter-spacing: 0.4px;
+  white-space: nowrap;
+}
+
+.market-index-value {
+  font-size: 17px;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.market-index-change {
+  color: var(--muted);
+  font-size: 10px;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.market-index--closed {
+  color: #71808a;
+}
+
+.market-index--closed .market-index-value,
+.market-index--closed .market-index-change {
+  color: #71808a;
+}
+
+.market-index--unavailable .market-index-change {
+  max-width: 150px;
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+
+.card.has-market-indices .clockrow,
+.card.has-market-indices .date {
+  max-width: 43%;
+}
+
+.card.has-market-indices .clockrow {
+  flex-wrap: wrap;
+  gap: 0 6px;
+}
+
+.card.has-market-indices .clock {
+  font-size: 27px;
+}
+
+.card.has-market-indices .tz {
+  flex-basis: 100%;
+}
+
+.market-index--flash-up .market-index-value,
+.market-index--flash-up .market-index-change {
+  animation: index-flash-up 850ms ease-out;
+}
+
+.market-index--flash-down .market-index-value,
+.market-index--flash-down .market-index-change {
+  animation: index-flash-down 850ms ease-out;
+}
+
+@keyframes index-flash-up {
+  30%,
+  65% {
+    color: var(--green);
+    text-shadow: 0 0 11px rgb(60 219 155 / 55%);
+  }
+}
+
+@keyframes index-flash-down {
+  30%,
+  65% {
+    color: #ff6868;
+    text-shadow: 0 0 11px rgb(255 104 104 / 50%);
+  }
+}
+
+@media (max-width: 640px) {
+  .market-indices {
+    right: 12px;
+    gap: 6px;
+    max-width: 60%;
+  }
+
+  .market-index-value {
+    font-size: 14px;
+  }
+
+  .card.has-market-indices .clock {
+    font-size: 24px;
+  }
+
+  .card.has-market-indices .clockrow,
+  .card.has-market-indices .date {
+    max-width: 40%;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .market-index--flash-up .market-index-value,
+  .market-index--flash-up .market-index-change,
+  .market-index--flash-down .market-index-value,
+  .market-index--flash-down .market-index-change {
+    animation: none;
+  }
+}
